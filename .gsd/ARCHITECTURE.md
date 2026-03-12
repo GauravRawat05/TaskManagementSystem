@@ -7,17 +7,17 @@ A monolithic full-stack app leveraging Vite + React.js for the Frontend and Node
 
 ## Core Services
 
-### Frontend (React + Vite + TypeScript)
+### Frontend (React + Vite + JavaScript)
 - **Role-Based Routing System**: Using React Router to guard `/admin`, `/manager`, and submission forms.
 - **State Management**: React Context or lightweight Zustand for Auth and Session management.
 - **Styling Framework**: Tailwind CSS for premium, responsive styling.
 - **File Parsing**: Client-side parsing using libraries like `papaparse` for CSV uploads to reduce server payload processing and enable preview/validation.
 
-### Backend (Node.js + Express + TypeScript)
-- **Authentication Service**: JWT issuance and validation. Passwords hashed via `bcryptjs`.
+### Backend (Node.js + Express + JavaScript)
+- **Authentication Service**: JWT issuance and validation. Passwords hashed via `bcrypt`.
 - **API Controllers**: Separated logic for `projects`, `users`, `interns`, `teams`, and `tasks`.
-- **Validation Layer**: `zod` schema validations on all incoming POST/PUT/PATCH requests.
-- **Serverless Adapters**: Configuration for Vercel deployment (typically `api/index.ts` exported).
+- **Validation Layer**: Controllers handling data checks before queries.
+- **Serverless Adapters**: Configuration for Vercel deployment (typically `api/index.js` exported).
 
 ### Database (MongoDB Atlas)
 Standard REST operations to document stores, typically integrated via Mongoose models enforcing schema strictly to match `SPEC.md` definitions.
