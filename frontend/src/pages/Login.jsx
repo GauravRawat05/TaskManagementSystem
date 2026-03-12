@@ -199,7 +199,6 @@ const Login = () => {
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </motion.div>
-
               
             </div>
 
