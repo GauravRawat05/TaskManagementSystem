@@ -7,6 +7,7 @@ import {
   HiOutlineQuestionMarkCircle,
   HiOutlineBell,
   HiOutlineLogin,
+  HiOutlineUserAdd,
   HiOutlineMenu,
   HiOutlineX,
   HiCheck
@@ -113,11 +114,19 @@ const Navbar = () => {
             {/* Enhanced Login Button */}
             <Link
               to="/login"
+              className="px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-all duration-300"
+            >
+              Login
+            </Link>
+
+            {/* Enhanced Register Button */}
+            <Link
+              to="/register"
               className="relative px-6 py-2.5 overflow-hidden rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 group"
             >
               <span className="relative z-10 flex items-center space-x-2">
-                <HiOutlineLogin className="w-4 h-4" />
-                <span>Login</span>
+                <HiOutlineUserAdd className="w-4 h-4" />
+                <span>Sign Up</span>
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
@@ -177,11 +186,21 @@ const Navbar = () => {
           {/* Mobile login button */}
           <Link
             to="/login"
-            className="w-full mt-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:shadow-md transition-all duration-300 flex items-center justify-center space-x-2"
+            className="w-full mt-2 px-4 py-3 border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-all duration-300 flex items-center justify-center space-x-2"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <HiOutlineLogin className="w-5 h-5" />
             <span>Login</span>
+          </Link>
+
+          {/* Mobile register button */}
+          <Link
+            to="/register"
+            className="w-full mt-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:shadow-md transition-all duration-300 flex items-center justify-center space-x-2"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <HiOutlineUserAdd className="w-5 h-5" />
+            <span>Sign Up</span>
           </Link>
         </div>
       </div>
