@@ -199,29 +199,7 @@ const Login = () => {
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </motion.div>
-
-              <AnimatePresence>
-                {role === 'admin' && (
-                  <motion.div 
-                    initial={{ height: 0, opacity: 0, y: -20 }}
-                    animate={{ height: "auto", opacity: 1, y: 0 }}
-                    exit={{ height: 0, opacity: 0, y: -20 }}
-                    className="relative group overflow-hidden"
-                  >
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-blue-500">
-                      <FaKey />
-                    </div>
-                    <input
-                      name="adminSecretKey"
-                      type="password"
-                      required
-                      className="block w-full pl-12 pr-4 py-4 border-2 border-blue-100 bg-blue-50 rounded-2xl text-gray-900 focus:outline-none focus:border-blue-600 focus:ring-0 transition-all"
-                      placeholder="Admin Secret Key"
-                      onChange={handleChange}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              
             </div>
 
             <motion.div variants={itemVariants} className="flex items-center justify-between py-2">
