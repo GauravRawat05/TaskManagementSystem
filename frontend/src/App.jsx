@@ -18,9 +18,11 @@ const App = () => {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/help" element={<Help />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
       </Route>
+
+      {/* Auth Pages (Full Screen) */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       {/* Protected Dashboards */}
       <Route element={<ProtectedRoute allowedRoles={['admin', 'manager']} />}>

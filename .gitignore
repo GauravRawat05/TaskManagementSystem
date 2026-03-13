@@ -1,15 +1,117 @@
-node_modules
-.env
-dist
-build
-.vscode
-.DS_Store
+# ================================================================
+#  NODE
+# ================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.npm
+.pnp
+.pnp.js
+.yarn/
 
-.agent
-.agent/workflows
-.gemini
-.gsd/examples
-.gsd/templates
-adapters
-docs
-scripts
+# ================================================================
+#  ENVIRONMENT & SECRETS  ← most important
+# ================================================================
+.env
+.env.*
+!.env.example
+*.env
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+
+# ================================================================
+#  BUILD / DIST OUTPUT
+# ================================================================
+dist/
+dist-ssr/
+build/
+*.tsbuildinfo
+out/
+
+# ================================================================
+#  LOGS & TEMP FILES
+# ================================================================
+logs/
+*.log
+*.tmp
+*.temp
+output.txt
+backend/output.txt
+
+# ================================================================
+#  OS / SYSTEM FILES
+# ================================================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ================================================================
+#  EDITOR & IDE FILES
+# ================================================================
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.sublime-project
+*.sublime-workspace
+
+# ================================================================
+#  AI AGENT & GSD INTERNAL FILES  ← don't push these
+# ================================================================
+.agent/
+.agents/
+.gemini/
+.qoder/
+GSD-STYLE.md
+PROJECT_RULES.md
+model_capabilities.yaml
+adapters/
+docs/
+scripts/
+
+# ================================================================
+#  GSD DOCUMENTATION (optional — comment out if you WANT it pushed)
+# ================================================================
+# .gsd/
+.gsd/examples/
+.gsd/templates/
+.gsd/phases/*/RESEARCH.md
+
+# ================================================================
+#  COVERAGE & TESTING ARTIFACTS
+# ================================================================
+coverage/
+.nyc_output/
+*.lcov
+jest-results/
+
+# ================================================================
+#  TYPESCRIPT COMPILED OUTPUT
+# ================================================================
+*.js.map
+*.d.ts
+
+# ================================================================
+#  UPLOADED / STATIC FILES (user uploads should not be in git)
+# ================================================================
+backend/public/uploads/
+backend/public/temp/
+frontend/public/temp/
+
+# ================================================================
+#  PACKAGE MANAGER LOCKS (keep package-lock.json but ignore others)
+# ================================================================
+yarn.lock
+pnpm-lock.yaml

@@ -32,32 +32,39 @@ import asyncHandler from '../utils/asyncHandler.js'
 //  Signup User
 const registerUser = asyncHandler(async(req,res)=>{
 
-    const { name, email, password, role, phone } = req.body;
+    const { name, email, password, phone, secretKey } = req.body;
 
-      const emailAleadyExist = await User.findOne({
-          email
-      })
-
-      if(emailAleadyExist) {
-        throw new ApiError(400, "User alreay exist with their email")
-      }
-
-    if([name,email,password,role,phone].some((item)=> item.trim() === "")) {
+    // Validate required fields
+    if([name, email, password, phone].some((item) => !item || item.trim() === "")) {
       throw new ApiError(400, "All fields are required")
     }
 
-        const register = await User.create(
-            {
-                  name : name,
-                  email : email,
-                  password : password,
-                  role : role || "manager",
-                  phone : phone
-            }
-        )
+    // Determine role from secret key
+    let role;
+    if (secretKey === process.env.MANAGER_SECRET_KEY) {
+      role = "manager";
+    } else if (secretKey === process.env.ADMIN_SECRET_KEY) {
+      role = "admin";
+    } else {
+      throw new ApiError(403, "Invalid secret key. You are not authorized to create an account.")
+    }
 
-  return res.status(200).json(new ApiResponse(200, {}, `${register.role} register successfully`))
+    const emailAlreadyExist = await User.findOne({ email })
+    if(emailAlreadyExist) {
+      throw new ApiError(400, "User already exists with this email")
+    }
+
+    const register = await User.create({
+          name,
+          email,
+          password,
+          role,
+          phone
+    })
+
+  return res.status(200).json(new ApiResponse(200, {}, `${register.role} registered successfully`))
 })
+
 
 
 //  SingIn User
