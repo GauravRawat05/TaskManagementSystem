@@ -31,23 +31,23 @@ const UploadInternModal = ({ onClose, onUploaded, showToast }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md bg-[#0f1117] border border-white/10 rounded-3xl p-7">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-7 shadow-xl">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">Bulk Upload Interns</h2>
-          <button onClick={onClose} className="text-white/50 hover:text-white"><FiX size={18} /></button>
+          <h2 className="text-xl font-bold text-slate-800">Bulk Upload Interns</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><FiX size={18} /></button>
         </div>
         <form onSubmit={handleUpload}>
-          <div className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center hover:border-indigo-500/50 transition-colors mb-4 relative">
+          <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-blue-500/50 transition-colors mb-4 relative bg-slate-50">
              <input type="file" accept=".csv,.xlsx" onChange={(e)=>setFile(e.target.files[0])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-             <FiUpload size={32} className="mx-auto text-indigo-400 mb-3" />
-             <p className="text-white text-sm font-medium">{file ? file.name : 'Click or drag CSV/Excel here'}</p>
-             <p className="text-white/40 text-xs mt-1">Columns: intern_id, name, email, joinDate, domain, role</p>
+             <FiUpload size={32} className="mx-auto text-blue-500 mb-3" />
+             <p className="text-slate-700 text-sm font-medium">{file ? file.name : 'Click or drag CSV/Excel here'}</p>
+             <p className="text-slate-400 text-xs mt-1">Columns: intern_id, name, email, joinDate, domain, role</p>
           </div>
-          {error && <p className="text-red-400 text-xs mb-4">{error}</p>}
+          {error && <p className="text-red-500 text-xs mb-4">{error}</p>}
           <div className="flex gap-3">
-             <button type="button" onClick={onClose} className="flex-1 py-2 rounded-xl border border-white/10 text-white/60">Cancel</button>
-             <button type="submit" disabled={loading} className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center justify-center gap-2">
+             <button type="button" onClick={onClose} className="flex-1 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">Cancel</button>
+             <button type="submit" disabled={loading} className="flex-1 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold flex items-center justify-center gap-2 transition-colors">
                {loading ? <FiLoader className="animate-spin" /> : 'Upload'}
              </button>
           </div>
@@ -70,7 +70,7 @@ const AddSingleInternModal = ({ onClose, onAdded, showToast }) => {
     if (!form.intern_id || !form.name || !form.email || !form.joinDate || !form.domain) {
       return setError('All fields are required.');
     }
-    
+
     // Convert YYYY-MM-DD to DD-MM-YYYY for backend format
     const [y, m, d] = form.joinDate.split('-');
     const formattedDate = `${d}-${m}-${y}`;
@@ -89,25 +89,25 @@ const AddSingleInternModal = ({ onClose, onAdded, showToast }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }} className="w-full max-w-lg bg-[#0f1117] border border-white/10 rounded-3xl p-7 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }} className="w-full max-w-lg bg-white border border-slate-200 rounded-3xl p-7 shadow-xl">
         <div className="flex items-center justify-between mb-6">
-          <div><h2 className="text-xl font-bold text-white">Add Single Intern</h2><p className="text-white/40 text-sm">Manually register an intern</p></div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition-all"><FiX size={16} /></button>
+          <div><h2 className="text-xl font-bold text-slate-800">Add Single Intern</h2><p className="text-slate-500 text-sm">Manually register an intern</p></div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-all"><FiX size={16} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="block text-white/60 text-[13px] mb-1.5 font-medium">Intern ID *</label><input name="intern_id" value={form.intern_id} onChange={handleChange} placeholder="e.g. INT001" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-indigo-500/60" /></div>
-            <div><label className="block text-white/60 text-[13px] mb-1.5 font-medium">Domain *</label><input name="domain" value={form.domain} onChange={handleChange} placeholder="e.g. Frontend" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-indigo-500/60" /></div>
+            <div><label className="block text-slate-600 text-[13px] mb-1.5 font-medium">Intern ID *</label><input name="intern_id" value={form.intern_id} onChange={handleChange} placeholder="e.g. INT001" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" /></div>
+            <div><label className="block text-slate-600 text-[13px] mb-1.5 font-medium">Domain *</label><input name="domain" value={form.domain} onChange={handleChange} placeholder="e.g. Frontend" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" /></div>
           </div>
-          <div><label className="block text-white/60 text-[13px] mb-1.5 font-medium">Full Name *</label><input name="name" value={form.name} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-indigo-500/60" /></div>
-          <div><label className="block text-white/60 text-[13px] mb-1.5 font-medium">Email Address *</label><input type="email" name="email" value={form.email} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-indigo-500/60" /></div>
-          <div><label className="block text-white/60 text-[13px] mb-1.5 font-medium">Joining Date *</label><input type="date" name="joinDate" value={form.joinDate} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:border-indigo-500/60 [color-scheme:dark]" /></div>
-          
-          {error && <p className="text-red-400 text-[13px] flex items-center gap-2"><FiAlertCircle size={14} />{error}</p>}
+          <div><label className="block text-slate-600 text-[13px] mb-1.5 font-medium">Full Name *</label><input name="name" value={form.name} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" /></div>
+          <div><label className="block text-slate-600 text-[13px] mb-1.5 font-medium">Email Address *</label><input type="email" name="email" value={form.email} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" /></div>
+          <div><label className="block text-slate-600 text-[13px] mb-1.5 font-medium">Joining Date *</label><input type="date" name="joinDate" value={form.joinDate} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" /></div>
+
+          {error && <p className="text-red-500 text-[13px] flex items-center gap-2"><FiAlertCircle size={14} />{error}</p>}
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:bg-white/5">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-semibold flex items-center justify-center gap-2">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Cancel</button>
+            <button type="submit" disabled={loading} className="flex-1 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors">
               {loading ? <FiLoader className="animate-spin" /> : 'Add Intern'}
             </button>
           </div>
@@ -139,42 +139,42 @@ export const InternsTab = ({ showToast }) => {
   return (
     <div className="animate-in fade-in duration-500">
       <div className="flex items-center justify-between mb-6">
-        <div><h2 className="text-lg font-bold text-white">All Interns</h2><p className="text-white/30 text-[13px]">{fetching ? 'Loading...' : `${interns.length} total interns`}</p></div>
+        <div><h2 className="text-lg font-bold text-slate-800">All Interns</h2><p className="text-slate-500 text-[13px]">{fetching ? 'Loading...' : `${interns.length} total interns`}</p></div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowSingleModal(true)} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"><FiPlus size={16} />Add Intern</button>
-          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"><FiUpload size={16} />Upload CSV</button>
+          <button onClick={() => setShowSingleModal(true)} className="flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm"><FiPlus size={16} />Add Intern</button>
+          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-sm shadow-blue-200"><FiUpload size={16} />Upload CSV</button>
         </div>
       </div>
 
-      <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {fetching ? (
-          <div className="p-8 text-center text-white/50"><FiLoader className="animate-spin mx-auto mb-2" />Loading interns...</div>
+          <div className="p-8 text-center text-slate-500"><FiLoader className="animate-spin mx-auto mb-2" />Loading interns...</div>
         ) : interns.length === 0 ? (
           <div className="p-12 text-center">
-            <FiUsers size={32} className="mx-auto text-white/20 mb-3" />
-            <p className="text-white font-semibold">No interns found</p>
-            <p className="text-white/40 text-sm mt-1">Upload a CSV file to add interns</p>
+            <FiUsers size={32} className="mx-auto text-slate-300 mb-3" />
+            <p className="text-slate-800 font-semibold">No interns found</p>
+            <p className="text-slate-500 text-sm mt-1">Upload a CSV file to add interns</p>
           </div>
         ) : (
           <div className="overflow-auto max-h-[500px]">
             <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-[#0f1117] sticky top-0 border-b border-white/10 z-10 shadow-sm shadow-black/20">
+              <thead className="bg-slate-50 sticky top-0 border-b border-slate-200 z-10">
                 <tr>
-                  <th className="px-5 py-4 font-medium text-white/60">ID</th>
-                  <th className="px-5 py-4 font-medium text-white/60">Name</th>
-                  <th className="px-5 py-4 font-medium text-white/60">Email</th>
-                  <th className="px-5 py-4 font-medium text-white/60">Domain</th>
-                  <th className="px-5 py-4 font-medium text-white/60">Joined</th>
+                  <th className="px-5 py-4 font-medium text-slate-600">ID</th>
+                  <th className="px-5 py-4 font-medium text-slate-600">Name</th>
+                  <th className="px-5 py-4 font-medium text-slate-600">Email</th>
+                  <th className="px-5 py-4 font-medium text-slate-600">Domain</th>
+                  <th className="px-5 py-4 font-medium text-slate-600">Joined</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-slate-100">
                 {interns.map(inv => (
-                  <tr key={inv._id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-5 py-4 text-white/80">{inv.internId}</td>
-                    <td className="px-5 py-4 font-medium text-white">{inv.name}</td>
-                    <td className="px-5 py-4 text-white/60">{inv.email}</td>
-                    <td className="px-5 py-4"><span className="px-2 py-1 rounded bg-white/10 text-xs text-white/80">{inv.domain}</span></td>
-                    <td className="px-5 py-4 text-white/60">{formatDate(inv.joiningDate)}</td>
+                  <tr key={inv._id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-5 py-4 text-slate-600">{inv.internId}</td>
+                    <td className="px-5 py-4 font-medium text-slate-800">{inv.name}</td>
+                    <td className="px-5 py-4 text-slate-500">{inv.email}</td>
+                    <td className="px-5 py-4"><span className="px-2 py-1 rounded bg-blue-50 text-xs text-blue-600 font-medium">{inv.domain}</span></td>
+                    <td className="px-5 py-4 text-slate-500">{formatDate(inv.joiningDate)}</td>
                   </tr>
                 ))}
               </tbody>
