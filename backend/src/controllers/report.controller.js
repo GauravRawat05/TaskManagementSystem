@@ -1,77 +1,104 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiResponse from '../utils/ApiResponse.js';
-import Report from '../models/report.model.js';
-import Task from '../models/task.model.js';
-import Project from '../models/project.model.js';
-import Team from '../models/team.model.js';
 import ApiError from '../utils/ApiError.js';
+import Report from '../models/report.model.js';
+import Team from '../models/team.model.js';
 import { checkWorkspaceRole } from '../utils/checkWorkspaceRole.js';
 
-// Team member submits a report
+// Team member submits or updates their daily report (one per project per day)
 export const submitReport = asyncHandler(async (req, res) => {
-    const { taskId, reportText } = req.body;
-    const user = req.user;
+  const { projectId, teamId, reportText, hoursWorked, date } = req.body;
+  const user = req.user;
 
-    if (!taskId || !reportText) {
-        throw new ApiError(400, "taskId and reportText are required");
-    }
+  if (!projectId || !teamId || !reportText || !date) {
+    throw new ApiError(400, 'projectId, teamId, reportText, and date are required');
+  }
 
-    const task = await Task.findById(taskId);
-    if (!task) throw new ApiError(404, "Task not found");
+  // Verify the user is actually a member of this team
+  const team = await Team.findById(teamId);
+  if (!team) throw new ApiError(404, 'Team not found');
 
-    if (task.memberId.toString() !== user._id.toString()) {
-        throw new ApiError(403, "You can only submit reports for tasks assigned to you");
-    }
+  const isMember = team.team.some(id => String(id) === String(user._id));
+  const isLeader = String(team.teamLeader) === String(user._id);
+  if (!isMember && !isLeader) {
+    throw new ApiError(403, 'You are not a member of this team');
+  }
 
-    const report = await Report.create({
-        taskId,
-        memberId: user._id,
-        reportText
-    });
+  // Normalize date to midnight UTC to ensure uniqueness per day
+  const reportDate = new Date(date);
+  reportDate.setUTCHours(0, 0, 0, 0);
 
-    return res.status(201).json(new ApiResponse(201, report, "Daily report submitted successfully"));
+  // Upsert: one report per member per project per day
+  const report = await Report.findOneAndUpdate(
+    { memberId: user._id, projectId, date: reportDate },
+    {
+      teamId,
+      reportText: reportText.trim(),
+      hoursWorked: hoursWorked || 0
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  return res.status(200).json(new ApiResponse(200, report, 'Daily report submitted successfully'));
 });
 
-// Admin, Manager, or Team Leader can view reports for a task
-export const getReportsByTask = asyncHandler(async (req, res) => {
-    const { taskId } = req.params;
-    
-    const task = await Task.findById(taskId);
-    if (!task) throw new ApiError(404, "Task not found");
+// Member views their own report history
+export const getMyReports = asyncHandler(async (req, res) => {
+  const { projectId } = req.query;
+  const user = req.user;
 
-    const project = await Project.findById(task.projectId);
-    
-    let isAuthorized = false;
-    
-    // Check if Team Member who owns the task
-    if (task.memberId.toString() === req.user._id.toString()) {
-        isAuthorized = true;
-    }
+  const query = { memberId: user._id };
+  if (projectId) query.projectId = projectId;
 
-    // Check if Admin or Manager
-    if (!isAuthorized) {
-        try {
-            isAuthorized = await checkWorkspaceRole(req, project.workspaceId);
-        } catch (e) {}
-    }
+  const reports = await Report.find(query)
+    .populate('projectId', 'projectName description')
+    .populate('teamId', 'teamName')
+    .sort({ date: -1 })
+    .lean();
 
-    // Check if Team Leader
-    if (!isAuthorized) {
-        const team = await Team.findOne({
-            projectId: project._id,
-            teamLeader: req.user._id,
-            team: task.memberId
-        });
-        if (team) {
-            isAuthorized = true;
-        }
-    }
-
-    if (!isAuthorized) {
-        throw new ApiError(403, "Not authorized to view these reports");
-    }
-
-    const reports = await Report.find({ taskId }).sort({ date: -1 }).populate("memberId", "name email avatar");
-
-    return res.status(200).json(new ApiResponse(200, reports, "Reports fetched successfully"));
+  return res.status(200).json(new ApiResponse(200, reports, 'Your reports fetched successfully'));
 });
+
+// Team Leader / Admin / Manager views reports for a team
+export const getTeamReports = asyncHandler(async (req, res) => {
+  const { teamId } = req.params;
+  const { date, memberId } = req.query;
+  const user = req.user;
+
+  const team = await Team.findById(teamId);
+  if (!team) throw new ApiError(404, 'Team not found');
+
+  // Authorization: Admin/Manager or the Team Leader of this team
+  let isAuthorized = false;
+  try {
+    isAuthorized = await checkWorkspaceRole(req, team.workspaceId || req.header('x-workspace-id'));
+  } catch (e) {}
+
+  if (!isAuthorized && String(team.teamLeader) === String(user._id)) {
+    isAuthorized = true;
+  }
+
+  if (!isAuthorized) {
+    throw new ApiError(403, 'Only the Team Leader, Admin, or Manager can view team reports');
+  }
+
+  const query = { teamId };
+  if (date) {
+    const d = new Date(date);
+    d.setUTCHours(0, 0, 0, 0);
+    query.date = d;
+  }
+  if (memberId) query.memberId = memberId;
+
+  const reports = await Report.find(query)
+    .populate('memberId', 'name email avatar')
+    .populate('projectId', 'projectName')
+    .sort({ date: -1 })
+    .lean();
+
+  return res.status(200).json(new ApiResponse(200, reports, 'Team reports fetched successfully'));
+});
+
+
+
+

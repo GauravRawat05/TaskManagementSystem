@@ -1,34 +1,27 @@
 import { Router } from "express";
 import { uploadFile } from "../middlewares/multer.middleware.js";
-import { addBulkIntern, addSingleIntern, availableIntern, getAllInterns, internLogin, internLogout } from "../controllers/intern.controller.js";
-import verifyJWTIntern from "../middlewares/intern.middleware.js";
-import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { addBulkIntern, addSingleIntern, availableIntern, getAllInterns } from "../controllers/intern.controller.js";
+import { verifyJWT, verifyWorkspaceAdmin } from '../middlewares/auth.middleware.js';
 
+const router = Router();
 
-const router = Router()
+router.use(verifyJWT);
 
-
+// Bulk upload — Admin/Manager only
 router.route("/add/interns/bulk").post(
-    uploadFile.fields([
-      {
-          name : "bulkIntern",
-          maxCount : 1
-      }
-    ]),
-    addBulkIntern
-)
+  verifyWorkspaceAdmin,
+  uploadFile.fields([{ name: "bulkIntern", maxCount: 1 }]),
+  addBulkIntern
+);
 
-router.route("/add/single").post(verifyJWT, addSingleIntern)
+// Single add — Admin/Manager only
+router.route("/add/single").post(verifyWorkspaceAdmin, addSingleIntern);
 
-router.route("/get/all/interns").get(getAllInterns)
+// Get all users in global pool
+router.route("/get/all/interns").get(getAllInterns);
 
-router.route("/available/interns").get(availableIntern)
-
-router.route("/login/intern").post(internLogin)
-
-router.route("/logout/intern").post(verifyJWTIntern, internLogout)
-
-
-
+// Get available members in a workspace not yet in any team
+router.route("/available/:workspaceId").get(availableIntern);
 
 export default router;
+

@@ -77,6 +77,10 @@ export const getWorkspaceById = (data) => {
   return apiClient.get(`/workspace/${data.workspaceId}`); // Added return
 }
 
+export const getMyWorkspaceRole = (workspaceId) => {
+  return apiClient.get(`/workspace/${workspaceId}/my-role`); 
+}
+
 // ------------------------------ X ------------------------------------
 // project
 

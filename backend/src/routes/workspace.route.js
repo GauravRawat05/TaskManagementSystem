@@ -1,36 +1,34 @@
 import { Router } from "express";
-import { createWorkspace, getWorkspaces, getWorkspaceById, addWorkspaceManager, inviteUserToWorkspace, updateWorkspaceMemberRole, removeWorkspaceMember } from "../controllers/workspace.controller.js";
+import {
+  createWorkspace,
+  getWorkspaces,
+  getWorkspaceById,
+  addWorkspaceManager,
+  inviteUserToWorkspace,
+  updateWorkspaceMemberRole,
+  removeWorkspaceMember,
+  getMyWorkspaceRole
+} from "../controllers/workspace.controller.js";
 import { verifyJWT, verifySuperuser, verifyWorkspaceAdmin } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// Routes for superuser
+// Superuser creates workspace
 router.route("/create").post(verifyJWT, verifySuperuser, createWorkspace);
 
+// Admin adds members / managers
 router.route("/add-manager/:workspaceId").post(verifyJWT, addWorkspaceManager);
 router.route("/invite-user/:workspaceId").post(verifyJWT, inviteUserToWorkspace);
 
-// Member Management
+// Member role management
 router.route("/:workspaceId/role/:userId").patch(verifyJWT, verifyWorkspaceAdmin, updateWorkspaceMemberRole);
 router.route("/:workspaceId/member/:userId").delete(verifyJWT, verifyWorkspaceAdmin, removeWorkspaceMember);
 
-// Routes for all authenticated users
+// Get logged-in user's role in a workspace (used by frontend for dashboard routing)
+router.route("/:workspaceId/my-role").get(verifyJWT, getMyWorkspaceRole);
+
+// General workspace queries
 router.route("/all").get(verifyJWT, getWorkspaces);
 router.route("/:workspaceId").get(verifyJWT, getWorkspaceById);
 
-
 export default router;
-
-
-
-
-
-// // Routes for superuser
-// router.route("/create").post(createWorkspace);
-// router.route("/add-manager/:workspaceId").post(addWorkspaceManager);
-
-// // Routes for all authenticated users
-// router.route("/all").get(getWorkspaces);
-// router.route("/:workspaceId").get(getWorkspaceById);
-
-// export default router;

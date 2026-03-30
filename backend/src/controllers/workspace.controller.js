@@ -195,4 +195,22 @@ const removeWorkspaceMember = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, workspace, "Member removed from workspace successfully"));
 });
 
-export { createWorkspace, getWorkspaces, getWorkspaceById, addWorkspaceManager, inviteUserToWorkspace, updateWorkspaceMemberRole, removeWorkspaceMember };
+const getMyWorkspaceRole = asyncHandler(async (req, res) => {
+    const { workspaceId } = req.params;
+
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) throw new ApiError(404, 'Workspace not found');
+
+    const member = workspace.members.find(m => m.user.toString() === req.user._id.toString());
+
+    if (!member && !req.user.isSuperuser) {
+        throw new ApiError(403, 'You are not a member of this workspace');
+    }
+
+    const role = req.user.isSuperuser ? 'ADMIN' : member.role;
+
+    return res.status(200).json(new ApiResponse(200, { role }, 'Workspace role fetched'));
+});
+
+export { createWorkspace, getWorkspaces, getWorkspaceById, addWorkspaceManager, inviteUserToWorkspace, updateWorkspaceMemberRole, removeWorkspaceMember, getMyWorkspaceRole };
+

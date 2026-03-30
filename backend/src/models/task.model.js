@@ -1,38 +1,53 @@
 import { model, Schema } from "mongoose";
 
-
 const taskSchema = new Schema(
   {
-    projectId : {
-      type : Schema.Types.ObjectId,
-      ref : "Project"
+    title: {
+      type: String,
+      required: true,
+      trim: true
     },
-    memberId : {
-        type : Schema.Types.ObjectId,
-        ref : "User"
+    projectId: {
+      type: Schema.Types.ObjectId,
+      ref: "Project",
+      required: true
     },
-    date : {
-      type : Date,
-      required : true
+    teamId: {
+      type: Schema.Types.ObjectId,
+      ref: "Team",
+      required: true
     },
-    description : {
-      type : String
+    assignedTo: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true
     },
-    status : {
-      type : String,
-      default : "pending",
-      enum : ["pending", "complete"]
+    assignedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true
     },
-    remark : {
-      type : String
+    dueDate: {
+      type: Date,
+      required: true
     },
-    submittedBy : {
-      type : Schema.Types.ObjectId,
-      ref : "User"
+    description: {
+      type: String,
+      default: ""
+    },
+    status: {
+      type: String,
+      default: "todo",
+      enum: ["todo", "in_progress", "done"]
+    },
+    remark: {
+      type: String,
+      default: ""
     }
-  }, { timestamps : true }
-)
+  },
+  { timestamps: true }
+);
 
-
-const Task = model("Task", taskSchema)
+const Task = model("Task", taskSchema);
 export default Task;
+

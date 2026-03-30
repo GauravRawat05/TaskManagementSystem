@@ -8,41 +8,41 @@ import ApiResponse from '../utils/ApiResponse.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { checkWorkspaceRole } from '../utils/checkWorkspaceRole.js';
 
+// Helper: set a user's role in a workspace
+const setWorkspaceMemberRole = async (workspaceId, userId, role) => {
+  await Workspace.findOneAndUpdate(
+    { _id: workspaceId, 'members.user': userId },
+    { $set: { 'members.$.role': role } }
+  );
+};
+
 // create team
-const createTeam= asyncHandler(async(req,res)=>{
+const createTeam = asyncHandler(async (req, res) => {
+  const { projectId, teamName, team, teamLeaderId, workSpaceId } = req.body;
 
-      const { projectId, teamName, team, teamLeaderId ,workSpaceId} = req.body
-      console.log(req.body);
+  const isAuthorized = await checkWorkspaceRole(req, workSpaceId);
+  if (!isAuthorized) throw new ApiError(403, 'Not authorized to create a team');
 
-      const isAuthorized = await checkWorkspaceRole(req, workSpaceId);
-      if(!isAuthorized) throw new ApiError(403, "Not authorized to create a team");
+  const project = await Project.findById(projectId);
+  if (!project) throw new ApiError(404, 'Project not found');
 
-      const project = await Project.findById(projectId)
+  const allMembers = await User.find({ _id: { $in: team } }).select('_id');
 
-      const teamLeader = await User.findByIdAndUpdate(teamLeaderId, {
-          $set : {
-            role : "teamLeader"
-          },
-      },{new : true}).select("-refreshToken")
+  const newTeam = await Team.create({
+    workspaceId: workSpaceId,
+    teamName,
+    projectId: project._id,
+    team: allMembers.map(m => m._id),
+    teamLeader: teamLeaderId || null
+  });
 
+  // Sync workspace roles
+  if (teamLeaderId) {
+    await setWorkspaceMemberRole(workSpaceId, teamLeaderId, 'TEAM_LEADER');
+  }
 
-      const teamLead = await User.findById(teamLeader._id)
-
-
-      const allMembers = await User.find({_id : {$in : team}})
-
-      console.log("allMembers",allMembers);
-
-        await Team.create({
-            workspaceId : workSpaceId,
-            teamName : teamName,
-            projectId : project._id,
-            team : allMembers,
-            teamLeader : teamLead,
-        })
-
-  return res.status(200).json(new ApiResponse(200, {}, "new project create successfully"))
-})
+  return res.status(200).json(new ApiResponse(200, newTeam, 'Team created successfully'));
+});
 
 // get team
 const getTeams = asyncHandler(async (req, res) => {
@@ -140,42 +140,36 @@ const removeTeamMember = asyncHandler(async(req,res)=>{
     return res.status(200).json(new ApiResponse(200, {}, "remove user from team successfully"))
 })
 
-//set new Team leader from team
-const setNewTeamLeader = asyncHandler(async(req,res)=>{
+// set new Team leader from team
+const setNewTeamLeader = asyncHandler(async (req, res) => {
+  const { teamId } = req.params;
+  const { NewTeamLeaderId } = req.body;
 
-        const { teamId } = req.params
+  const team = await Team.findById(teamId);
+  if (!team) throw new ApiError(404, 'Team not found');
 
-         const { NewTeamLeaderId } = req.body
+  const isAuthorized = await checkWorkspaceRole(req, team.workspaceId);
+  if (!isAuthorized) throw new ApiError(403, 'Not authorized to modify this team');
 
-        const team = await Team.findById(teamId);
-          if (!team) {
-            return res.status(404).json({ error: "Team not found" });
-          }
+  const NewTeamLeader = await User.findById(NewTeamLeaderId).select('_id');
+  if (!NewTeamLeader) throw new ApiError(404, 'User not found');
 
-          const isAuthorized = await checkWorkspaceRole(req, team.workspaceId);
-          if(!isAuthorized) throw new ApiError(403, "Not authorized to modify this team");
+  // Revert old leader to MEMBER
+  if (team.teamLeader && String(team.teamLeader) !== String(NewTeamLeaderId)) {
+    await setWorkspaceMemberRole(team.workspaceId, team.teamLeader, 'MEMBER');
+  }
 
+  const updatedTeam = await Team.findByIdAndUpdate(
+    team._id,
+    { $set: { teamLeader: NewTeamLeader._id }, $pull: { team: NewTeamLeader._id } },
+    { new: true }
+  );
 
-          const NewTeamLeader = await User.findOne({ _id: NewTeamLeaderId }).select("_id");
-          if (!NewTeamLeader) {
-            return res.status(404).json({ error: "teamLeader not found" });
-          }
+  // Promote new leader
+  await setWorkspaceMemberRole(team.workspaceId, NewTeamLeaderId, 'TEAM_LEADER');
 
-
-          const updatedTeam = await Team.findByIdAndUpdate(
-            team._id,
-            {
-               $set: { teamLeader: NewTeamLeader._id },
-               $pull : { team : NewTeamLeader._id }
-          } ,
-            { new: true }
-          );
-
-          console.log("Updated team:", updatedTeam.team);
-
-
-    return res.status(200).json(new ApiResponse(200, {}, "add new team leader from team update successfully"))
-})
+  return res.status(200).json(new ApiResponse(200, updatedTeam, 'Team leader updated successfully'));
+});
 
 // remove team leader and add to team
 const removeTeamLeaderAndAddToTeam = asyncHandler(async(req,res)=>{
@@ -210,34 +204,33 @@ const removeTeamLeaderAndAddToTeam = asyncHandler(async(req,res)=>{
   return res.status(200).json(new ApiResponse(200, {}, "remove team Leader from team and add to team successfully"))
 })
 
-// update team completely (name, leaders, members)
-const updateTeam = asyncHandler(async(req,res)=>{
+// update team completely (name, leader, members)
+const updateTeam = asyncHandler(async (req, res) => {
   const { teamId } = req.params;
   const { teamName, teamLeaderId, team } = req.body;
 
   const existingTeam = await Team.findById(teamId);
-  if(!existingTeam) {
-    throw new ApiError(404, "Team not found");
-  }
+  if (!existingTeam) throw new ApiError(404, 'Team not found');
 
   const isAuthorized = await checkWorkspaceRole(req, existingTeam.workspaceId);
-  if(!isAuthorized) throw new ApiError(403, "Not authorized to modify this team");
+  if (!isAuthorized) throw new ApiError(403, 'Not authorized to modify this team');
 
-  if(teamLeaderId && String(existingTeam.teamLeader) !== String(teamLeaderId)) {
-    if(existingTeam.teamLeader) {
-       await User.findByIdAndUpdate(existingTeam.teamLeader, { $set: { role: "intern" }});
+  // Sync workspace roles if leader changed
+  if (teamLeaderId && String(existingTeam.teamLeader) !== String(teamLeaderId)) {
+    if (existingTeam.teamLeader) {
+      await setWorkspaceMemberRole(existingTeam.workspaceId, existingTeam.teamLeader, 'MEMBER');
     }
-    await User.findByIdAndUpdate(teamLeaderId, { $set: { role: "teamLeader" }});
+    await setWorkspaceMemberRole(existingTeam.workspaceId, teamLeaderId, 'TEAM_LEADER');
   }
 
   const updatedTeam = await Team.findByIdAndUpdate(teamId, {
     teamName: teamName || existingTeam.teamName,
     teamLeader: teamLeaderId || existingTeam.teamLeader,
-    team: team || existingTeam.team
+    team: team !== undefined ? team : existingTeam.team
   }, { new: true });
 
-  return res.status(200).json(new ApiResponse(200, updatedTeam, "Team updated successfully"));
-})
+  return res.status(200).json(new ApiResponse(200, updatedTeam, 'Team updated successfully'));
+});
 
 // delete team
 const deleteTeam = asyncHandler(async (req, res) => {

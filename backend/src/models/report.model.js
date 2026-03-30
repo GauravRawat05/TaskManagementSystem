@@ -2,9 +2,14 @@ import { model, Schema } from "mongoose";
 
 const reportSchema = new Schema(
   {
-    taskId: {
+    projectId: {
       type: Schema.Types.ObjectId,
-      ref: "Task",
+      ref: "Project",
+      required: true
+    },
+    teamId: {
+      type: Schema.Types.ObjectId,
+      ref: "Team",
       required: true
     },
     memberId: {
@@ -12,16 +17,28 @@ const reportSchema = new Schema(
       ref: "User",
       required: true
     },
-    reportText: {
-      type: String,
-      required: true
-    },
     date: {
       type: Date,
-      default: Date.now
+      required: true
+    },
+    reportText: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    hoursWorked: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 24
     }
-  }, { timestamps: true }
+  },
+  { timestamps: true }
 );
+
+// One report per member per project per day
+reportSchema.index({ memberId: 1, projectId: 1, date: 1 }, { unique: true });
 
 const Report = model("Report", reportSchema);
 export default Report;
+
