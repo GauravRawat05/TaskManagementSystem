@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiPlus, FiCalendar, FiClock, FiCheck, FiX, FiUsers, FiList, FiFileText,
@@ -20,6 +20,7 @@ import {
   deleteTask,
   getTeamReports,
   loggedOutUser,
+  getWorkspaces,
   changeCurrentPassword,
   updateUserProfile,
   updateUserAvatar
@@ -27,6 +28,7 @@ import {
 
 const TeamLeaderDashboard = () => {
   const { workspaceId } = useParams();
+  const navigate = useNavigate();
   const { user, setUser, logout } = useAuth();
 
   // Navigation
@@ -40,6 +42,7 @@ const TeamLeaderDashboard = () => {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [projects, setProjects] = useState([]);
   const [workspace, setWorkspace] = useState(null);
+  const [allWorkspaces, setAllWorkspaces] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [reports, setReports] = useState([]);
 
@@ -81,6 +84,11 @@ const TeamLeaderDashboard = () => {
       (err) => console.error("Failed to load workspace", err)
     );
   }, [workspaceId]);
+
+  // Load all workspaces for switching
+  useEffect(() => {
+    requestHandler(() => getWorkspaces(), setLoading, (res) => setAllWorkspaces(res.data || res), () => {});
+  }, []);
 
   // Load teams
   useEffect(() => {
@@ -335,7 +343,19 @@ const TeamLeaderDashboard = () => {
                 <FiBriefcase className="text-indigo-600" size={14} />
                 <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Workspace</span>
               </div>
-              <p className="text-sm font-bold text-gray-800 truncate">{workspace?.name || 'Loading...'}</p>
+              {allWorkspaces.length > 1 ? (
+                <select
+                  value={workspaceId}
+                  onChange={(e) => navigate(`/workspace/${e.target.value}`)}
+                  className="w-full text-sm font-bold text-gray-800 bg-white border border-gray-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 mb-2 cursor-pointer"
+                >
+                  {allWorkspaces.map(ws => (
+                    <option key={ws._id} value={ws._id}>{ws.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <p className="text-sm font-bold text-gray-800 truncate">{workspace?.name || 'Loading...'}</p>
+              )}
               <div className="mt-2 flex items-center gap-2">
                 <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">Team Leader</span>
               </div>

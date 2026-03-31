@@ -77,7 +77,7 @@ const getAllTask = asyncHandler(async (req, res) => {
   const workspaceId = req.header('x-workspace-id') || req.body?.workspaceId;
   if (workspaceId) {
     const role = await getWorkspaceRole(workspaceId, user._id);
-    if (role === 'MEMBER') {
+    if (role === 'MEMBER' || role === 'TEAM_MEMBER') {
       // Members only see tasks assigned to them
       query.assignedTo = user._id;
     } else if (role === 'TEAM_LEADER') {
@@ -115,11 +115,12 @@ const updateTask = asyncHandler(async (req, res) => {
     isAdminOrManager = await checkWorkspaceRole(req, project.workspaceId);
   } catch (e) {}
 
-  const isAssignedMember = String(task.assignedTo) === String(user._id);
+  const isAssignedMember = task.assignedTo.toString() === user._id.toString();
   const team = await Team.findById(task.teamId);
-  const isTeamLeader = team && String(team.teamLeader) === String(user._id);
+  const isTeamLeader = team && team.teamLeader && team.teamLeader.toString() === user._id.toString();
+  const isTeamMember = team && team.team && team.team.some(id => id.toString() === user._id.toString());
 
-  if (!isAdminOrManager && !isAssignedMember && !isTeamLeader) {
+  if (!isAdminOrManager && !isAssignedMember && !isTeamLeader && !isTeamMember) {
     throw new ApiError(403, 'Not authorized to update this task');
   }
 

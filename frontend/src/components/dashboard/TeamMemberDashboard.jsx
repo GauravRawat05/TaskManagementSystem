@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiCheckCircle, FiClock, FiFileText, FiRefreshCw, FiHome, FiFolder, FiUsers,
@@ -11,11 +11,12 @@ import { useAuth } from '../../context/AuthContext';
 import { requestHandler } from '../../utils';
 import {
   getTasks, updateTask, submitReport, getMyReports, getTeams, getProjects,
-  getWorkspaceById, loggedOutUser, changeCurrentPassword, updateUserProfile, updateUserAvatar
+  getWorkspaceById, getWorkspaces, loggedOutUser, changeCurrentPassword, updateUserProfile, updateUserAvatar
 } from '../../api';
 
 const TeamMemberDashboard = () => {
   const { workspaceId } = useParams();
+  const navigate = useNavigate();
   const { user, setUser, logout } = useAuth();
 
   // Navigation
@@ -29,6 +30,7 @@ const TeamMemberDashboard = () => {
   const [myTeams, setMyTeams] = useState([]);
   const [projects, setProjects] = useState([]);
   const [workspace, setWorkspace] = useState(null);
+  const [allWorkspaces, setAllWorkspaces] = useState([]);
 
   // Report Form
   const [reportForm, setReportForm] = useState({ projectId: '', teamId: '', reportText: '', hoursWorked: '' });
@@ -57,6 +59,11 @@ const TeamMemberDashboard = () => {
     if (!workspaceId) return;
     requestHandler(() => getWorkspaceById({ workspaceId }), setLoading, (res) => setWorkspace(res.data || res), () => {});
   }, [workspaceId]);
+
+  // Load all workspaces for switching
+  useEffect(() => {
+    requestHandler(() => getWorkspaces(), setLoading, (res) => setAllWorkspaces(res.data || res), () => {});
+  }, []);
 
   // Load teams I belong to
   const loadMyTeams = useCallback(() => {
@@ -221,7 +228,19 @@ const TeamMemberDashboard = () => {
                 <FiBriefcase className="text-emerald-600" size={14} />
                 <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Workspace</span>
               </div>
-              <p className="text-sm font-bold text-gray-800 truncate">{workspace?.name || 'Loading...'}</p>
+              {allWorkspaces.length > 1 ? (
+                <select
+                  value={workspaceId}
+                  onChange={(e) => navigate(`/workspace/${e.target.value}`)}
+                  className="w-full text-sm font-bold text-gray-800 bg-white border border-gray-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 mb-2 cursor-pointer"
+                >
+                  {allWorkspaces.map(ws => (
+                    <option key={ws._id} value={ws._id}>{ws.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <p className="text-sm font-bold text-gray-800 truncate">{workspace?.name || 'Loading...'}</p>
+              )}
               <div className="mt-2">
                 <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">Team Member</span>
               </div>
