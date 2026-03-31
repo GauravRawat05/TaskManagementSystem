@@ -93,7 +93,8 @@ const getAllProjectsByWorkspace = asyncHandler(async (req, res) => {
   const isPrivileged =
     req.user.isSuperuser || isWorkspaceAdmin || isWorkspaceManager || isWorkspaceManegar;
 
-  if (!isPrivileged && !isWorkspaceMember) {
+  const isAnyMember = workspace.members?.some((member) => member.user.toString() === userId.toString());
+  if (!isPrivileged && !isAnyMember) {
     throw new ApiError(403, "You are not authorized to access this workspace");
   }
 
