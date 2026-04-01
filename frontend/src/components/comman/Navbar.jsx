@@ -94,14 +94,14 @@ const Navbar = () => {
                 <img
                   src={Athenura_Title_Image}
                   alt="Logo"
-                  className="w-10 h-10 rounded-xl border-2 rounded-2xl"
+                  className="w-15 h-15 rounded-xl"
                 />
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-900 bg-clip-text text-transparent">
-                TMS
-              </span>
-              <span className="text-[10px] tracking-wider text-gray-500 font-medium">
+<span className="text-xl font-bold bg-linear-to-r from-blue-500 via-blue-700 to-black [background-size:200%_200%] animate-gradient bg-clip-text text-transparent">
+  TMS
+</span>
+              <span className="text-[10px] tracking-wider text-black font-medium">
                 Task Management System
               </span>
             </div>

@@ -42,12 +42,10 @@ const verifySuperuser = asyncHandler(async(req, res, next) => {
 // Verifies if the user is at least a member of the workspace
 const verifyWorkspaceMember = asyncHandler(async(req, res, next) => {
 
-  console.log("req.body",req.body)
-
-    const workspaceId = req.header("x-workspace-id") || req.body?.workspaceId || req.params
-
+    const workspaceId = req.header("x-workspace-id") || req.body?.workspaceId || req.params?.workspaceId;
+    
     if(!workspaceId) {
-        throw new ApiError(400, "Workspace ID is required in headers.");
+        throw new ApiError(400, "Workspace ID is required in headers or body.");
     }
 
     if(req.user.isSuperuser) return next();
@@ -67,11 +65,9 @@ const verifyWorkspaceMember = asyncHandler(async(req, res, next) => {
 // Verifies if the user is a MANAGER or ADMIN in the workspace
 const verifyWorkspaceAdmin = asyncHandler(async(req, res, next) => {
 
-      console.log("req.body",req.body)
-
-    const workspaceId = req.header("x-workspace-id") || req.body.workspaceId
+    const workspaceId = req.header("x-workspace-id") || req.body?.workspaceId || req.params?.workspaceId;
     if(!workspaceId) {
-        throw new ApiError(400, "Workspace ID is required in headers.");
+        throw new ApiError(400, "Workspace ID is required in headers or body.");
     }
 
     if(req.user.isSuperuser) return next();
@@ -88,5 +84,31 @@ const verifyWorkspaceAdmin = asyncHandler(async(req, res, next) => {
     next();
 });
 
+// Verifies if the user is a TEAM_LEADER (or Admin/Manager) in the workspace
+const verifyTeamLeader = asyncHandler(async(req, res, next) => {
+    const workspaceId = req.header("x-workspace-id") || req.body?.workspaceId || req.params?.workspaceId;
+    if (!workspaceId) {
+        throw new ApiError(400, "Workspace ID is required in headers or body.");
+    }
 
-export { verifyJWT, verifySuperuser, verifyWorkspaceMember, verifyWorkspaceAdmin };
+    if (req.user.isSuperuser) return next();
+
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) throw new ApiError(404, "Workspace not found.");
+
+    const member = workspace.members.find(m => m.user.toString() === req.user._id.toString());
+    if (!member) throw new ApiError(403, "You are not a member of this workspace.");
+
+    const allowedRoles = ["ADMIN", "MANAGER", "TEAM_LEADER"];
+    if (!allowedRoles.includes(member.role)) {
+        throw new ApiError(403, "Only Team Leaders, Admins, or Managers can perform this action.");
+    }
+
+    req.workspace = workspace;
+    req.workspaceRole = member.role;
+    next();
+});
+
+
+export { verifyJWT, verifySuperuser, verifyWorkspaceMember, verifyWorkspaceAdmin, verifyTeamLeader };
+

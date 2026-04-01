@@ -15,7 +15,7 @@ const port = process.env.PORT || 5002
 connectDB().then(()=>{
       socketHandler(server)
       server.listen(port,()=>{
-            console.log(`server listening the port : ${port}`)
+
       })
 }).catch((error)=>{
       console.error(error.messge || "something wen't wrong when database connection")

@@ -8,9 +8,10 @@ import PagesLayout from './components/Layout/PagesLayout';
 import Login from './components/auth/Login';
 import Register from './pages/Register';
 import ProtectedRoute from './components/Layout/ProtectedRoute';
-import WorkPlaceHome from './components/componetns/WorkPlaceHome';
-import AcceptInvite from './components/componetns/AcceptInvite';
+import WorkPlaceHome from './components/components/WorkPlaceHome';
+import AcceptInvite from './components/components/AcceptInvite';
 import NotFoundPage from './pages/NotFoundPage'
+import WorkspaceRoleRouter from './components/dashboard/WorkspaceRoleRouter';
 
 const App = () => {
   return (
@@ -30,20 +31,10 @@ const App = () => {
 
       {/* Protected Workspace Routes with Nested Structure */}
       <Route element={<ProtectedRoute />}>
-        {/* Main workspace routes with dynamic workspace ID */}
-        <Route path="/workspace/:workspaceId" element={<WorkPlaceHome />}>
-          {/* These routes will be handled by the WorkPlaceHome component's internal routing */}
-        </Route>
-        <Route path="/workspace/:workspaceId/projects" element={<WorkPlaceHome />} />
-        <Route path="/workspace/:workspaceId/teams" element={<WorkPlaceHome />} />
-        <Route path="/workspace/:workspaceId/members" element={<WorkPlaceHome />} />
-        <Route path="/workspace/:workspaceId/analytics" element={<WorkPlaceHome />} />
-        <Route path="/workspace/:workspaceId/global-pool" element={<WorkPlaceHome />} />
-        <Route path="/workspace/:workspaceId/invites" element={<WorkPlaceHome />} />
-        <Route path="/workspace/:workspaceId/profile" element={<WorkPlaceHome />} />
-        <Route path="/workspace/:workspaceId/tasks" element={<WorkPlaceHome />} />
+        {/* Main workspace routing based on role */}
+        <Route path="/workspace/:workspaceId/*" element={<WorkspaceRoleRouter />} />
 
-        {/* Redirect root workspaces to first workspace (handled by component) */}
+        {/* Redirect root workspaces to first workspace (handled by component usually) */}
         <Route path="/workspaces" element={<WorkPlaceHome />} />
         <Route path="/dashboard" element={<Navigate to="/workspaces" replace />} />
       </Route>

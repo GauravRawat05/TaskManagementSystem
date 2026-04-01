@@ -4,8 +4,17 @@ import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
-// Superuser: Create a new workspace
+// Superuser or Admin: Create a new workspace
 const createWorkspace = asyncHandler(async (req, res) => {
+    if (!req.user.isSuperuser) {
+        const isAdminInAnyWorkspace = await Workspace.exists({
+            members: { $elemMatch: { user: req.user._id, role: "ADMIN" } }
+        });
+        if (!isAdminInAnyWorkspace) {
+            throw new ApiError(403, "Forbidden! Only Admins and Superusers can create workspaces.");
+        }
+    }
+
     const { name, description } = req.body;
 
     if (!name || name.trim() === "") {
@@ -84,9 +93,6 @@ const getWorkspaceById = asyncHandler(async (req, res) => {
 // Superuser: Add a Manager to a Workspace
 const addWorkspaceManager = asyncHandler(async (req, res) => {
 
-  console.log(req.body);
-
-
     const { workspaceId } = req.params;
     const { userId } = req.body; // Internal User ID from the global pool
 
@@ -126,4 +132,112 @@ const addWorkspaceManager = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, workspace, "User added as Workspace Manager successfully"));
 });
 
-export { createWorkspace, getWorkspaces, getWorkspaceById, addWorkspaceManager };
+const inviteUserToWorkspace = asyncHandler(async (req, res) => {
+    const { workspaceId } = req.params;
+    const { userId, role } = req.body;
+
+    if (!userId) {
+        throw new ApiError(400, "User ID is required");
+    }
+
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+        throw new ApiError(404, "Workspace not found");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found in the global pool");
+    }
+
+    // Check if user is already a member
+    const existingMemberIndex = workspace.members.findIndex(
+        (member) => member.user.toString() === userId.toString()
+    );
+
+    const newRole = role || "MEMBER";
+
+    if (existingMemberIndex !== -1) {
+        workspace.members[existingMemberIndex].role = newRole;
+    } else {
+        workspace.members.push({
+            user: userId,
+            role: newRole
+        });
+    }
+
+    await workspace.save();
+
+    return res.status(200).json(new ApiResponse(200, workspace, "User added to Workspace successfully"));
+});
+
+const updateWorkspaceMemberRole = asyncHandler(async (req, res) => {
+    const { workspaceId, userId } = req.params;
+    const { role } = req.body;
+
+    if (!role) throw new ApiError(400, "Role is required");
+
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) throw new ApiError(404, "Workspace not found");
+
+    const memberIndex = workspace.members.findIndex(m => m.user.toString() === userId.toString());
+    if (memberIndex === -1) throw new ApiError(404, "Member not found in workspace");
+
+    workspace.members[memberIndex].role = role.toUpperCase();
+    await workspace.save();
+
+    return res.status(200).json(new ApiResponse(200, workspace, "Member role updated successfully"));
+});
+
+const removeWorkspaceMember = asyncHandler(async (req, res) => {
+    const { workspaceId, userId } = req.params;
+
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) throw new ApiError(404, "Workspace not found");
+
+    workspace.members = workspace.members.filter(m => m.user.toString() !== userId.toString());
+    await workspace.save();
+
+    return res.status(200).json(new ApiResponse(200, workspace, "Member removed from workspace successfully"));
+});
+
+const getMyWorkspaceRole = asyncHandler(async (req, res) => {
+    const { workspaceId } = req.params;
+
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) throw new ApiError(404, 'Workspace not found');
+
+    const member = workspace.members.find(m => m.user.toString() === req.user._id.toString());
+
+    if (!member && !req.user.isSuperuser) {
+        throw new ApiError(403, 'You are not a member of this workspace');
+    }
+
+    const role = req.user.isSuperuser ? 'ADMIN' : member.role;
+
+    return res.status(200).json(new ApiResponse(200, { role }, 'Workspace role fetched'));
+});
+
+const deleteWorkspace = asyncHandler(async (req, res) => {
+    const { workspaceId } = req.params;
+
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+        throw new ApiError(404, "Workspace not found");
+    }
+
+    // Only allow Superuser or Workspace ADMIN to delete
+    if (!req.user.isSuperuser) {
+        const member = workspace.members.find(m => m.user.toString() === req.user._id.toString());
+        if (!member || member.role !== "ADMIN") {
+            throw new ApiError(403, "Forbidden! Only Workspace Admins and Superusers can delete this workspace.");
+        }
+    }
+
+    await Workspace.findByIdAndDelete(workspaceId);
+
+    return res.status(200).json(new ApiResponse(200, {}, "Workspace deleted successfully"));
+});
+
+export { createWorkspace, getWorkspaces, getWorkspaceById, addWorkspaceManager, inviteUserToWorkspace, updateWorkspaceMemberRole, removeWorkspaceMember, getMyWorkspaceRole, deleteWorkspace };
+

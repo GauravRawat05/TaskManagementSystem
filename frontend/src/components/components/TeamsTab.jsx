@@ -22,21 +22,33 @@ const TeamsTab = ({
 }) => {
   // Helper function to get team members from the team array
   const getTeamMembers = (team) => {
-    // The team data structure has a 'team' array containing member IDs
-    // We need to match these IDs with availableUsers to get full member details
-    const memberIds = team.team || [];
-    return memberIds.map(memberId => {
-      const user = availableUsers?.find(u => u._id === memberId);
-      return user || { _id: memberId, name: 'Loading...', email: '' };
+    const rawMembers = team.team || [];
+    return rawMembers.map(member => {
+      // If member is already an object (populated by backend)
+      if (member && typeof member === 'object' && member.name) {
+        return member;
+      }
+      // Otherwise look it up in availableUsers
+      const userId = typeof member === 'object' ? member._id : member;
+      const user = availableUsers?.find(u => u._id === userId);
+      return user || { _id: userId, name: 'Loading...', email: '' };
     });
   };
 
   // Helper function to get team leader details
   const getTeamLeader = (team, members) => {
-    const leaderId = team.teamLeader;
-    if (!leaderId) return null;
-    const leader = availableUsers?.find(u => u._id === leaderId);
-    return leader || { _id: leaderId, name: 'Loading...', email: '' };
+    const leader = team.teamLeader;
+    if (!leader) return null;
+    
+    // If leader is already an object (populated by backend)
+    if (typeof leader === 'object' && leader.name) {
+      return leader;
+    }
+    
+    // Otherwise look it up in availableUsers
+    const leaderId = typeof leader === 'object' ? leader._id : leader;
+    const leaderUser = availableUsers?.find(u => u._id === leaderId);
+    return leaderUser || { _id: leaderId, name: 'Loading...', email: '' };
   };
 
   // Helper function to get project name from projectId
@@ -119,7 +131,7 @@ const TeamsTab = ({
                         <FiEdit2 size={14} className="text-gray-600" />
                       </button>
                       <button
-                        onClick={() => handleDeleteTeam(team._id)}
+                        onClick={() => handleDeleteTeam(team._id, team.teamName)}
                         className="p-1.5 hover:bg-white/50 rounded-lg transition-colors"
                         title="Delete Team"
                       >
@@ -160,22 +172,10 @@ const TeamsTab = ({
                   <div className="flex gap-3 pt-2">
                     <button
                       onClick={() => setShowAddMemberModal(team)}
-                      className="flex-1 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1"
+                      className="w-full text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1"
                     >
                       <FiUserPlus size={14} /> Add Member
                     </button>
-                    {teamLeader && (
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Remove ${teamLeader.name} as team leader and add as regular member?`)) {
-                            handleRemoveTeamLeaderAndAddToTeam(team._id, teamLeader._id);
-                          }
-                        }}
-                        className="flex-1 text-sm bg-orange-50 text-orange-600 hover:bg-orange-100 px-3 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1"
-                      >
-                        <FiUserX size={14} /> Remove Leader
-                      </button>
-                    )}
                   </div>
                 )}
 
@@ -225,11 +225,7 @@ const TeamsTab = ({
                                 </button>
                               )}
                               <button
-                                onClick={() => {
-                                  if (window.confirm(`Remove ${member.name} from team?`)) {
-                                    handleRemoveTeamMember(team._id, member._id);
-                                  }
-                                }}
+                                onClick={() => handleRemoveTeamMember(team._id, member._id, member.name)}
                                 className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
                                 title="Remove Member"
                               >

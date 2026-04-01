@@ -58,8 +58,6 @@ const fileFilter = (req,file,cb) => {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" // .xlsx
 ];
 
-    console.log(file.mimetype)
-
     if(allowedExtensions.includes(file.mimetype)) {
       cb(null, true)
     } else {

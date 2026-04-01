@@ -16,7 +16,8 @@ import {
   FiCheck,
   FiEye,
   FiBarChart2,
-  FiList
+  FiList,
+  FiX // Added FiX here
 } from 'react-icons/fi';
 
 import { Link } from 'react-router-dom';
@@ -42,6 +43,7 @@ const Dashboard = ({
   setShowCreateProjectModal,
   setShowCreateTeamModal,
   setShowInviteModal,
+  setShowDeleteWorkplaceModal,
   handleDeleteProject,
   handleUpdateProjectDeadline,
   ...props
@@ -63,8 +65,8 @@ const Dashboard = ({
   // Check if user has admin/manager permissions (using correct spelling)
   const hasManagementAccess = currentUserRole === "MANAGER" || currentUserRole === "ADMIN" || isSuperuser;
 
-  // Check if user can create workplace (admin/manager or has explicit permission)
-  const canCreateWorkplaceAccess = hasManagementAccess || canCreateWorkplace;
+  // Check if user can create workspace (admin or superuser)
+  const canCreateWorkplaceAccess = currentUserRole === "ADMIN" || isSuperuser;
 
   // Check if user can create/edit/delete (management actions)
   const canManage = hasManagementAccess;
@@ -72,9 +74,8 @@ const Dashboard = ({
   // Check if user can view but not modify (member view)
   const isMemberOnly = !hasManagementAccess && !isSuperuser;
 
-  // UPDATED: Check if user can invite members - ONLY hide for MANAGER role
-  // Show for ADMIN, SUPERUSER, or if explicitly allowed, but NOT for MANAGER
-  const canInviteMembersAccess = (currentUserRole === "ADMIN" || isSuperuser || canInviteMembers) && currentUserRole !== "MANAGER";
+  // Show for ADMIN, SUPERUSER, or if explicitly allowed. Managers can invite members per new RBAC rule.
+  const canInviteMembersAccess = currentUserRole === "MANAGER" || currentUserRole === "ADMIN" || isSuperuser || canInviteMembers;
 
   // Calculate statistics
   useEffect(() => {
@@ -112,17 +113,6 @@ const Dashboard = ({
       setUpcomingDeadlines(upcoming);
     }
   }, [projects, teams, members]);
-
-  // Get current workplace name
-  const currentWorkplace = workplaces?.find(w => w._id === selectedWorkplace);
-  const workplaceName = currentWorkplace?.name || 'Select a Workplace';
-  const workplaceCount = workplaces?.length || 0;
-
-  // Handle workplace switch
-  const handleWorkplaceSwitch = (workplaceId) => {
-    setSelectedWorkplace(workplaceId);
-    setShowWorkplaceDropdown(false);
-  };
 
   // Stat cards data
   const statCards = [
@@ -205,13 +195,6 @@ const Dashboard = ({
       color: 'bg-purple-600 hover:bg-purple-700'
     },
     {
-      label: 'Create Workplace',
-      icon: FiPlus,
-      onClick: () => setShowCreateWorkplaceModal(true),
-      visible: canManage && canCreateWorkplaceAccess,
-      color: 'bg-orange-600 hover:bg-orange-700'
-    },
-    {
       label: 'Create Team',
       icon: FiUsers,
       onClick: () => setShowCreateTeamModal(true),
@@ -219,6 +202,11 @@ const Dashboard = ({
       color: 'bg-green-600 hover:bg-green-700'
     }
   ].filter(action => action.visible);
+
+  // Filter stat cards based on user request
+  const filteredStatCards = statCards.filter(stat => 
+    !['Active Projects', 'Team Members', 'Upcoming Deadlines'].includes(stat.title)
+  );
 
   // Member view actions (view-only buttons)
   const memberActions = [
@@ -291,84 +279,6 @@ const Dashboard = ({
                 : `You are logged in as a Team Member. You can view projects, teams, and your tasks.`}
             </p>
           </div>
-
-          {/* Workplace Switcher Button */}
-          <div className="relative">
-            <button
-              onClick={() => setShowWorkplaceDropdown(!showWorkplaceDropdown)}
-              className="flex items-center gap-2 text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-4 py-2.5 transition-all"
-            >
-              <FiBriefcase className="w-4 h-4 text-blue-500" />
-              <span className="font-medium text-gray-700">{workplaceName}</span>
-              {showWorkplaceDropdown ? (
-                <FiChevronUp className="w-4 h-4 text-gray-400" />
-              ) : (
-                <FiChevronDown className="w-4 h-4 text-gray-400" />
-              )}
-            </button>
-
-            {/* Dropdown Menu */}
-            <AnimatePresence>
-              {showWorkplaceDropdown && workplaces && workplaces.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden"
-                >
-                  <div className="p-2 border-b border-gray-100 bg-gray-50">
-                    <p className="text-xs text-gray-500 px-3 py-1">Switch Workplace</p>
-                  </div>
-                  <div className="max-h-80 overflow-y-auto">
-                    {workplaces.map((workplace) => (
-                      <button
-                        key={workplace._id}
-                        onClick={() => handleWorkplaceSwitch(workplace._id)}
-                        className={`w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left ${
-                          selectedWorkplace === workplace._id ? 'bg-blue-50' : ''
-                        }`}
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <FiBriefcase className={`w-4 h-4 ${
-                              selectedWorkplace === workplace._id ? 'text-blue-500' : 'text-gray-400'
-                            }`} />
-                            <span className={`text-sm font-medium ${
-                              selectedWorkplace === workplace._id ? 'text-blue-600' : 'text-gray-700'
-                            }`}>
-                              {workplace.name}
-                            </span>
-                          </div>
-                          {workplace.description && (
-                            <p className="text-xs text-gray-400 mt-1 truncate">
-                              {workplace.description}
-                            </p>
-                          )}
-                        </div>
-                        {selectedWorkplace === workplace._id && (
-                          <FiCheck className="w-4 h-4 text-blue-500" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                  {canManage && canCreateWorkplaceAccess && (
-                    <div className="p-2 border-t border-gray-100 bg-gray-50">
-                      <button
-                        onClick={() => {
-                          setShowWorkplaceDropdown(false);
-                          setShowCreateWorkplaceModal(true);
-                        }}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      >
-                        <FiPlus className="w-4 h-4" />
-                        Create New Workplace
-                      </button>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
         </div>
       </div>
 
@@ -399,7 +309,7 @@ const Dashboard = ({
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Navigation</h2>
           <div className="flex flex-wrap gap-3">
             {memberActions.map((action, index) => (
-              <Link key={index} to={action.link}>
+              <Link key={index} to={`/workspace/${selectedWorkplace}${action.link}`}>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -415,15 +325,15 @@ const Dashboard = ({
       )}
 
       {/* Statistics Grid - Clickable for both roles */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {statCards.map((stat, index) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredStatCards.map((stat, index) => {
           const Icon = stat.icon;
           const StatContent = (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow cursor-pointer border border-gray-100"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className={`p-2 rounded-lg ${stat.bgColor}`}>
@@ -431,12 +341,12 @@ const Dashboard = ({
                 </div>
                 <span className="text-2xl font-bold text-gray-800">{stat.value}</span>
               </div>
-              <p className="text-sm text-gray-600">{stat.title}</p>
+              <p className="text-sm text-gray-600 font-medium">{stat.title}</p>
             </motion.div>
           );
 
           return stat.link ? (
-            <Link key={index} to={stat.link}>
+            <Link key={index} to={`/workspace/${selectedWorkplace}${stat.link}`}>
               {StatContent}
             </Link>
           ) : (
@@ -447,18 +357,18 @@ const Dashboard = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Projects */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-800">Recent Projects</h2>
             {canManage && canCreateProject ? (
               <button
                 onClick={() => setShowCreateProjectModal(true)}
-                className="text-sm text-blue-600 hover:text-blue-700"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
               >
                 + New Project
               </button>
             ) : (
-              <Link to="/projects" className="text-sm text-blue-600 hover:text-blue-700">
+              <Link to={`/workspace/${selectedWorkplace}/projects`} className="text-sm text-blue-600 hover:text-blue-700">
                 View All →
               </Link>
             )}
@@ -467,12 +377,12 @@ const Dashboard = ({
           {recentProjects.length > 0 ? (
             <div className="space-y-3">
               {recentProjects.map((project, index) => (
-                <Link key={project._id} to={`/projects/${project._id}`}>
+                <Link key={project._id} to={`/workspace/${selectedWorkplace}/projects`}>
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="border border-gray-100 rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="border border-gray-100 rounded-lg p-3 hover:bg-blue-50/50 hover:border-blue-100 transition-all cursor-pointer"
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -486,10 +396,8 @@ const Dashboard = ({
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                          new Date(project.deadline) > new Date()
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                          new Date(project.deadline) > new Date() ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                         }`}>
                           {new Date(project.deadline) > new Date() ? 'Active' : 'Completed'}
                         </span>
@@ -503,20 +411,12 @@ const Dashboard = ({
             <div className="text-center py-8">
               <FiFolder className="w-12 h-12 text-gray-300 mx-auto mb-2" />
               <p className="text-gray-500">No projects yet</p>
-              {canManage && canCreateProject && (
-                <button
-                  onClick={() => setShowCreateProjectModal(true)}
-                  className="mt-3 text-sm text-blue-600 hover:text-blue-700"
-                >
-                  Create your first project
-                </button>
-              )}
             </div>
           )}
         </div>
 
         {/* Upcoming Deadlines */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Upcoming Deadlines</h2>
 
           {upcomingDeadlines.length > 0 ? (
@@ -525,19 +425,23 @@ const Dashboard = ({
                 const DeadlineIcon = getDeadlineIcon(project.deadline);
                 const daysRemaining = daysLeft(project.deadline);
                 return (
-                  <Link key={project._id} to={`/projects/${project._id}`}>
+                  <Link key={project._id} to={`/workspace/${selectedWorkplace}/projects`}>
                     <motion.div
-                      initial={{ opacity: 0, x: -20 }}
+                      initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="border border-gray-100 rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                      className={`border rounded-xl p-4 transition-all cursor-pointer ${
+                        daysRemaining !== null && daysRemaining <= 3
+                          ? 'bg-red-50 border-red-100 hover:bg-red-100 shadow-sm shadow-red-50'
+                          : 'bg-white border-gray-100 hover:bg-gray-50'
+                      }`}
                     >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h3 className="font-medium text-gray-800">{project.projectName}</h3>
-                          <div className="flex items-center gap-2 mt-1">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-semibold text-gray-800">{project.projectName}</h3>
+                          <div className="flex items-center gap-2 mt-1.5">
                             <DeadlineIcon className={`w-4 h-4 ${getDeadlineStatus(project.deadline)}`} />
-                            <span className={`text-sm font-medium ${getDeadlineStatus(project.deadline)}`}>
+                            <span className={`text-sm font-bold ${getDeadlineStatus(project.deadline)}`}>
                               {daysRemaining !== null && (
                                 daysRemaining < 0
                                   ? `Overdue by ${Math.abs(daysRemaining)} days`
@@ -555,7 +459,7 @@ const Dashboard = ({
                               e.preventDefault();
                               props.setShowEditDeadlineModal?.(project);
                             }}
-                            className="text-sm text-blue-600 hover:text-blue-700"
+                            className="bg-white px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
                           >
                             Update
                           </button>
@@ -567,105 +471,106 @@ const Dashboard = ({
               })}
             </div>
           ) : (
-            <div className="text-center py-8">
+            <div className="text-center py-12">
               <FiCalendar className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-500">No upcoming deadlines</p>
-              <p className="text-sm text-gray-400 mt-1">All caught up!</p>
+              <p className="text-gray-500 font-medium">All caught up!</p>
+              <p className="text-sm text-gray-400">No urgent deadlines approaching</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Teams Overview */}
-      {teams && teams.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Teams Overview</h2>
-            {canManage && canCreateTeam ? (
-              <button
-                onClick={() => setShowCreateTeamModal(true)}
-                className="text-sm text-blue-600 hover:text-blue-700"
-              >
-                + New Team
-              </button>
-            ) : (
-              <Link to="/teams" className="text-sm text-blue-600 hover:text-blue-700">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Teams Overview */}
+        {teams && teams.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">Teams</h2>
+              {canManage && canCreateTeam ? (
+                <button
+                  onClick={() => setShowCreateTeamModal(true)}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  + New Team
+                </button>
+              ) : (
+                <Link to={`/workspace/${selectedWorkplace}/teams`} className="text-sm text-blue-600 hover:text-blue-700">
+                  View All →
+                </Link>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {teams.slice(0, 4).map((team, index) => (
+                <Link key={team._id} to={`/workspace/${selectedWorkplace}/teams`}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="border border-gray-100 rounded-xl p-4 hover:shadow-md hover:border-purple-200 hover:bg-purple-50/30 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-gray-800">{team.teamName}</h3>
+                      <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                        <FiUsers className="text-indigo-600 w-4 h-4" />
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      {(team.team?.length || 0)} members
+                    </p>
+                    {team.teamLeader && (
+                      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 flex items-center justify-center text-white text-[10px] font-bold">
+                          {team.teamLeader.name?.charAt(0)}
+                        </div>
+                        <span className="text-xs text-gray-600 font-medium truncate">Lead: {team.teamLeader.name}</span>
+                      </div>
+                    )}
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Members */}
+        {members && members.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">Members</h2>
+              <Link to={`/workspace/${selectedWorkplace}/members`} className="text-sm text-blue-600 hover:text-blue-700">
                 View All →
               </Link>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              {members.slice(0, 10).map((member, index) => (
+                <Link key={member._id} to={`/workspace/${selectedWorkplace}/members`}>
+                  <motion.div
+                    whileHover={{ y: -5 }}
+                    className="flex flex-col items-center gap-2 min-w-[80px]"
+                  >
+                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-sm font-bold shadow-sm shadow-indigo-100">
+                      {member.name?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <p className="text-xs font-semibold text-gray-700 truncate max-w-[80px]">{member.name}</p>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+
+            {members.length > 10 && (
+              <div className="text-center mt-6">
+                <Link to={`/workspace/${selectedWorkplace}/members`} className="bg-gray-50 px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors">
+                  + {members.length - 10} more members
+                </Link>
+              </div>
             )}
           </div>
+        )}
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {teams.slice(0, 6).map((team, index) => (
-              <Link key={team._id} to={`/teams/${team._id}`}>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-gray-800">{team.teamName}</h3>
-                    <FiUsers className="text-gray-400 w-4 h-4" />
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    {team.members?.length || 0} members
-                  </p>
-                  {team.teamLeader && (
-                    <p className="text-xs text-gray-400 mt-2">
-                      Lead: {team.teamLeader.name || 'Not assigned'}
-                    </p>
-                  )}
-                </motion.div>
-              </Link>
-            ))}
-          </div>
 
-          {teams.length > 6 && (
-            <div className="text-center mt-4">
-              <Link to="/teams" className="text-sm text-blue-600 hover:text-blue-700">
-                View all {teams.length} teams →
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Recent Members */}
-      {members && members.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Recent Members</h2>
-
-          <div className="flex flex-wrap gap-3">
-            {members.slice(0, 8).map((member, index) => (
-              <Link key={member._id} to={`/members/${member._id}`}>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.03 }}
-                  className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 hover:bg-gray-100 transition-colors cursor-pointer"
-                >
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                    {member.name?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{member.name}</p>
-                    <p className="text-xs text-gray-500">{member.role}</p>
-                  </div>
-                </motion.div>
-              </Link>
-            ))}
-          </div>
-
-          {members.length > 8 && (
-            <div className="text-center mt-4">
-              <Link to="/members" className="text-sm text-blue-600 hover:text-blue-700">
-                View all {members.length} members →
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Empty State for No Workplace Selected */}
       {!selectedWorkplace && (

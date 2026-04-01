@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AiFillCrown } from 'react-icons/ai';
-import { FiX, FiUsers, FiUserPlus, FiUserMinus, FiBriefcase, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import { FiX, FiUsers, FiUserPlus, FiUserMinus, FiBriefcase, FiCheckCircle, FiAlertCircle, FiPlus, FiTrash2 } from 'react-icons/fi';
 
 const CreateTeamModal = ({
   show,
@@ -228,89 +228,88 @@ const CreateTeamModal = ({
                 <FiUsers className="inline mr-1" size={14} /> Team Members
               </label>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Available Users */}
-                <div>
-                  <div className="text-xs font-semibold text-gray-600 mb-2 bg-gray-100 px-3 py-1.5 rounded-lg inline-block">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Available Users List */}
+                <div className="flex flex-col h-64">
+                  <div className="text-xs font-semibold text-gray-600 mb-2 bg-gray-100 px-3 py-1.5 rounded-lg self-start">
                     Available Users ({getAvailableMembers().length})
                   </div>
-                  <select
-                    multiple
-                    size="5"
-                    className="w-full p-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm bg-gray-50"
-                    onChange={(e) => {
-                      const selectedValue = e.target.value;
-                      if (selectedValue && !teamMembers.includes(selectedValue)) {
-                        handleAddMember(selectedValue);
-                      }
-                    }}
-                    value={[]}
-                  >
-                    {getAvailableMembers().map(user => (
-                      <option key={user._id} value={user._id}>
-                        {user.name} {user.email ? `(${user.email})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Click to select, then use "Add" button
-                  </p>
-                </div>
-
-                {/* Selected Members */}
-                <div>
-                  <div className="text-xs font-semibold text-gray-600 mb-2 bg-purple-100 px-3 py-1.5 rounded-lg inline-block">
-                    Selected Members ({teamMembers.length})
-                  </div>
-                  <div className="border-2 border-gray-200 rounded-xl h-32 overflow-y-auto bg-gray-50">
-                    {teamMembers.length === 0 ? (
-                      <div className="p-3 text-sm text-gray-400 text-center">
-                        No members selected
+                  <div className="flex-1 border-2 border-gray-200 rounded-xl overflow-y-auto bg-gray-50 custom-scrollbar p-1">
+                    {getAvailableMembers().length === 0 ? (
+                      <div className="p-4 text-sm text-gray-400 text-center flex flex-col items-center justify-center h-full">
+                        <FiUsers size={24} className="mb-2 opacity-50" />
+                        No available users
                       </div>
                     ) : (
-                      getSelectedMemberDetails().map(member => (
+                      getAvailableMembers().map(user => (
                         <div
-                          key={member._id}
-                          className="flex items-center justify-between p-2 hover:bg-purple-50 border-b border-gray-100 transition-colors"
+                          key={user._id}
+                          className="flex items-center justify-between p-2 mb-1 bg-white border border-gray-100 rounded-lg hover:border-purple-300 hover:shadow-sm transition-all group"
                         >
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-800 truncate">{member.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{member.email}</p>
+                          <div className="flex-1 min-w-0 pr-2">
+                            <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
+                            {user.email && <p className="text-xs text-gray-400 truncate">{user.email}</p>}
                           </div>
                           <button
                             type="button"
-                            onClick={() => handleRemoveMember(member._id)}
-                            className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Remove member"
+                            onClick={() => handleAddMember(user._id)}
+                            className="bg-purple-50 text-purple-600 p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-purple-100 transition-all focus:opacity-100"
+                            title="Add to team"
                           >
-                            <FiUserMinus size={14} />
+                            <FiPlus size={16} />
                           </button>
                         </div>
                       ))
                     )}
                   </div>
-                  <div className="flex gap-2 mt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const select = document.querySelector('select[multiple]');
-                        const selectedOption = select?.options[select.selectedIndex];
-                        if (selectedOption && selectedOption.value) {
-                          handleAddMember(selectedOption.value);
-                        }
-                      }}
-                      className="flex items-center gap-1 px-3 py-1.5 text-sm bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all"
-                    >
-                      <FiUserPlus size={14} />
-                      Add Selected
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTeamMembers([])}
-                      className="px-3 py-1.5 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all"
-                    >
-                      Clear All
-                    </button>
+                  <p className="text-xs text-gray-500 mt-2 text-center md:text-left">
+                    Click the + icon to add members
+                  </p>
+                </div>
+
+                {/* Selected Members List */}
+                <div className="flex flex-col h-64">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-semibold text-purple-700 bg-purple-100 px-3 py-1.5 rounded-lg inline-block">
+                      Selected Members ({teamMembers.length})
+                    </div>
+                    {teamMembers.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setTeamMembers([])}
+                        className="text-xs text-gray-500 hover:text-red-500 transition-colors px-2 py-1"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex-1 border-2 border-purple-200 rounded-xl overflow-y-auto bg-purple-50/30 custom-scrollbar p-1">
+                    {teamMembers.length === 0 ? (
+                      <div className="p-4 text-sm text-gray-400 text-center flex flex-col items-center justify-center h-full">
+                        <FiUserPlus size={24} className="mb-2 opacity-50" />
+                        No members selected yet
+                      </div>
+                    ) : (
+                      getSelectedMemberDetails().map(member => (
+                        <div
+                          key={member._id}
+                          className="flex items-center justify-between p-2 mb-1 bg-white border border-purple-100 rounded-lg shadow-sm group"
+                        >
+                          <div className="flex-1 min-w-0 pr-2">
+                            <p className="text-sm font-medium text-purple-900 truncate">{member.name}</p>
+                            {member.email && <p className="text-xs text-purple-400/80 truncate">{member.email}</p>}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMember(member._id)}
+                            className="text-red-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                            title="Remove from team"
+                          >
+                            <FiTrash2 size={16} />
+                          </button>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>

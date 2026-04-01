@@ -10,9 +10,6 @@ const createProject = asyncHandler(async (req, res) => {
     const { workspaceId, projectName, description, startDate, deadline } = req.body;
     const user = req.user;
 
-    console.log(req.body);
-
-
     if (!workspaceId || !projectName || !startDate || !deadline) {
         throw new ApiError(400, "workspaceId, projectName, startDate, and deadline are required");
     }
@@ -93,7 +90,8 @@ const getAllProjectsByWorkspace = asyncHandler(async (req, res) => {
   const isPrivileged =
     req.user.isSuperuser || isWorkspaceAdmin || isWorkspaceManager || isWorkspaceManegar;
 
-  if (!isPrivileged && !isWorkspaceMember) {
+  const isAnyMember = workspace.members?.some((member) => member.user.toString() === userId.toString());
+  if (!isPrivileged && !isAnyMember) {
     throw new ApiError(403, "You are not authorized to access this workspace");
   }
 
@@ -144,11 +142,25 @@ const updateDeadline = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid date format");
     }
 
-    const project = await Project.findByIdAndUpdate(projectId, {
-        $set: {
-            deadline: postponedDate
+    const project = await Project.findById(projectId);
+    if (!project) throw new ApiError(404, "Project not found");
+
+    const workspace = await Workspace.findById(project.workspaceId);
+    let isAuthorized = req.user.isSuperuser;
+    if (!isAuthorized && workspace) {
+        const memberRecord = workspace.members.find(
+            m => m.user.toString() === req.user._id.toString()
+        );
+        if (memberRecord && (memberRecord.role === "MANAGER" || memberRecord.role === "ADMIN")) {
+            isAuthorized = true;
         }
-    }, { new: true });
+    }
+    if (!isAuthorized) {
+        throw new ApiError(403, "Not authorized to modify this project's deadline");
+    }
+
+    project.deadline = postponedDate;
+    await project.save();
 
     if (!project) throw new ApiError(404, "Project not found");
 
@@ -160,12 +172,28 @@ const updateProject = asyncHandler(async (req, res) => {
     const { projectId } = req.params;
     const { projectName, description, startDate, deadline } = req.body;
 
-    const project = await Project.findByIdAndUpdate(projectId, {
-        projectName,
-        description,
-        startDate: new Date(startDate),
-        deadline: new Date(deadline)
-    }, { new: true });
+    const project = await Project.findById(projectId);
+    if (!project) throw new ApiError(404, "Project not found");
+
+    const workspace = await Workspace.findById(project.workspaceId);
+    let isAuthorized = req.user.isSuperuser;
+    if (!isAuthorized && workspace) {
+        const memberRecord = workspace.members.find(
+            m => m.user.toString() === req.user._id.toString()
+        );
+        if (memberRecord && (memberRecord.role === "MANAGER" || memberRecord.role === "ADMIN")) {
+            isAuthorized = true;
+        }
+    }
+    if (!isAuthorized) {
+        throw new ApiError(403, "Not authorized to modify this project");
+    }
+
+    project.projectName = projectName;
+    project.description = description;
+    if (startDate) project.startDate = new Date(startDate);
+    if (deadline) project.deadline = new Date(deadline);
+    await project.save();
 
     if (!project) throw new ApiError(404, "Project not found");
 
@@ -173,9 +201,41 @@ const updateProject = asyncHandler(async (req, res) => {
 });
 
 
+// delete project
+const deleteProject = asyncHandler(async (req, res) => {
+    const { projectId } = req.params;
+
+    const project = await Project.findById(projectId);
+    if (!project) throw new ApiError(404, "Project not found");
+
+    const workspace = await Workspace.findById(project.workspaceId);
+    let isAuthorized = req.user.isSuperuser;
+    if (!isAuthorized && workspace) {
+        const memberRecord = workspace.members.find(
+            m => m.user.toString() === req.user._id.toString()
+        );
+        if (memberRecord && (memberRecord.role === "MANAGER" || memberRecord.role === "ADMIN")) {
+            isAuthorized = true;
+        }
+    }
+    if (!isAuthorized) {
+        throw new ApiError(403, "Not authorized to delete this project");
+    }
+
+    // Delete associated teams
+    await Team.deleteMany({ projectId: project._id });
+    
+    // Delete the project
+    await Project.findByIdAndDelete(projectId);
+
+    return res.status(200).json(new ApiResponse(200, {}, "Project and its teams deleted successfully"));
+});
+
+
 export {
   createProject,
   getAllProjectsByWorkspace,
   updateDeadline,
-  updateProject
+  updateProject,
+  deleteProject
 };

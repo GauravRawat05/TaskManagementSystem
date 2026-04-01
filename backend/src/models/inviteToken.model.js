@@ -14,7 +14,7 @@ const inviteTokenSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ["ADMIN", "MANAGER", "MEMBER", "TEAM_LEAD", "TEAM_MEMBER"],
+      enum: ["ADMIN", "MANAGER", "MEMBER", "TEAM_LEAD", "TEAM_MEMBER", "INTERN"],
       required: true
     },
     expiresAt: {

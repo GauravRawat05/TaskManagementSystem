@@ -62,7 +62,10 @@ const UserCard = ({ member, showJoinedDate = true, onRoleChange, isEditable = fa
   const joinedDate = getJoinedDate();
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-all duration-200 hover:border-gray-300">
+    <div 
+      onClick={() => member.onViewProfile?.(member)}
+      className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-all duration-200 hover:border-gray-300 cursor-pointer group"
+    >
       <div className="flex items-start justify-between">
         {/* Left section - Avatar and User Info */}
         <div className="flex items-center space-x-4 flex-1">

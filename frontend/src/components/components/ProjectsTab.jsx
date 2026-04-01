@@ -134,7 +134,7 @@ const ProjectsTab = ({
                     )}
                     {canDelete && (
                       <button
-                        onClick={() => handleDeleteProject(project._id)}
+                        onClick={() => handleDeleteProject(project._id, project.projectName)}
                         className="p-2 hover:bg-red-50 rounded-lg transition-colors"
                         title="Delete Project"
                       >

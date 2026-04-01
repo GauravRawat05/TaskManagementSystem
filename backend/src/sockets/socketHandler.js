@@ -16,13 +16,11 @@ const socketHandler = (server) => {
 
 
    io.on("connection", (socket) => {
-        console.log("a user connected", socket.id);
-
 
         // Register User
         socket.on("registerUser", (userId)=>{
             onlineUser[userId]  = socket.id
-            console.log("online User" , userId);
+
         })
 
 
@@ -39,7 +37,6 @@ const socketHandler = (server) => {
 
           // disconnect
           socket.io("disconnect",()=>{
-              console.log("user disconnect");
 
               for(const userId in onlineUser) {
                 if(onlineUser[userId] === socket.id) {

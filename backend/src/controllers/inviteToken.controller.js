@@ -10,8 +10,6 @@ import asyncHandler from '../utils/asyncHandler.js';
 // Manager/Admin generates an invite link for a specific role
 const generateInviteLink = asyncHandler(async (req, res) => {
     const { workspaceId, role } = req.body;
-    console.log("req.body  invait link", req.body);
-
 
     // role e.g., "TEAM_MEMBER" or "MANAGER" etc.
     if (!workspaceId || !role) {
@@ -61,9 +59,6 @@ const generateInviteLink = asyncHandler(async (req, res) => {
         expiresAt
     });
 
-    console.log(`inviteRecord.token, expiresAt`,token);
-
-
     // We realistically want the frontend URL, but backend doesn't always know it natively.
     // For now we just return the raw token. The frontend constructs the domain.com/invite?token=XYZ
     return res.status(201).json(new ApiResponse(201, { token: inviteRecord.token, expiresAt }, "Invite link generated securely"));
@@ -73,9 +68,6 @@ const generateInviteLink = asyncHandler(async (req, res) => {
 const acceptInvite = asyncHandler(async (req, res) => {
     const { token, email, password } = req.body;
 
-    console.log(`token`,token);
-    console.log(`email`,email);
-    console.log(`password`,password);
 
 
     if (!token || !email || !password) {
@@ -110,7 +102,7 @@ const acceptInvite = asyncHandler(async (req, res) => {
 
     // Inject User into Workspace as "MEMBER" (or whatever was designated, e.g., "MANAGER")
     // Note: If the invite is for a project (e.g. TEAM_MEMBER), the parent workspace role defaults to "MEMBER"
-    const workspaceRole = (inviteRecord.role === "TEAM_MEMBER" || inviteRecord.role === "TEAM_LEAD") ? "MEMBER" : inviteRecord.role;
+    const workspaceRole = (inviteRecord.role === "TEAM_MEMBER" || inviteRecord.role === "TEAM_LEAD" || inviteRecord.role === "INTERN") ? "MEMBER" : inviteRecord.role;
 
     const existingWorkspaceMember = workspace.members.find(m => m.user.toString() === user._id.toString());
     if (!existingWorkspaceMember) {

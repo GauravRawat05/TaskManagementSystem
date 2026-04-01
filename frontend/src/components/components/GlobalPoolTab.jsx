@@ -28,8 +28,12 @@ const GlobalPoolTab = ({
   onInviteToWorkspace,
   onRemoveFromWorkspace,
   onRefreshUsers,
-  isLoadingUsers = false
+  isLoadingUsers = false,
+  projects = [],
+  teams = [],
+  handleAddMemberToTeam
 }) => {
+  const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterVerified, setFilterVerified] = useState('all');
   const [filterWorkspaceStatus, setFilterWorkspaceStatus] = useState('all');
@@ -81,8 +85,9 @@ const GlobalPoolTab = ({
   }).length;
 
   const handleInviteToWorkspace = (userId) => {
-    if (onInviteToWorkspace && canInviteMembers) {
-      onInviteToWorkspace(userId);
+    if (canInviteMembers) {
+      setSelectedUsers([userId]);
+      setShowAssignmentModal(true);
     }
   };
 
@@ -94,13 +99,28 @@ const GlobalPoolTab = ({
 
   const handleBulkInvite = () => {
     if (selectedUsers.length > 0 && canInviteMembers) {
-      selectedUsers.forEach(userId => {
+      setShowAssignmentModal(true);
+    }
+  };
+
+  const handleBulkSubmit = async ({ projectId }) => {
+    if (selectedUsers.length > 0 && canInviteMembers) {
+      for (const userId of selectedUsers) {
         if (!isWorkspaceMember(userId)) {
-          onInviteToWorkspace(userId);
+          await onInviteToWorkspace(userId);
         }
-      });
+        
+        // If a project is selected, also add them to that project's team
+        if (projectId && handleAddMemberToTeam) {
+            const team = teams.find(t => t.projectId === projectId);
+            if (team) {
+                await handleAddMemberToTeam(team._id, userId);
+            }
+        }
+      }
       setSelectedUsers([]);
       setShowBulkActions(false);
+      setShowAssignmentModal(false);
     }
   };
 
@@ -129,6 +149,67 @@ const GlobalPoolTab = ({
     if (!date) return 'Not set';
     const d = new Date(date);
     return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const AssignmentModal = () => {
+    const [selectedProjectId, setSelectedProjectId] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    if (!showAssignmentModal) return null;
+
+    const onSubmit = async () => {
+      setIsSubmitting(true);
+      await handleBulkSubmit({ projectId: selectedProjectId });
+      setIsSubmitting(false);
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+          <div className="flex justify-between items-center mb-5 border-b pb-3">
+            <h3 className="text-xl font-bold text-gray-800">Assign Users to Workspace & Project</h3>
+            <button onClick={() => setShowAssignmentModal(false)} className="text-gray-400 hover:text-gray-600">
+              <FiX size={20} />
+            </button>
+          </div>
+          <div className="mb-4">
+             <label className="block text-sm font-medium text-gray-700 mb-1">Target Workspace</label>
+             <input type="text" disabled value="Current Workspace" className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed" />
+             <p className="text-xs text-gray-500 mt-1">Users will be added to the currently active workspace as members.</p>
+          </div>
+          <div className="mb-6">
+             <label className="block text-sm font-medium text-gray-700 mb-1">Target Project / Team (Optional)</label>
+             <select
+               value={selectedProjectId}
+               onChange={(e) => setSelectedProjectId(e.target.value)}
+               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+             >
+               <option value="">-- No specific project --</option>
+               {projects.map(p => (
+                 <option key={p._id} value={p._id}>{p.projectName}</option>
+               ))}
+             </select>
+             <p className="text-xs text-gray-500 mt-1">If selected, users will also be added to the team associated with this project.</p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <button
+               disabled={isSubmitting}
+               onClick={() => setShowAssignmentModal(false)}
+               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+               disabled={isSubmitting}
+               onClick={onSubmit}
+               className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2"
+            >
+              {isSubmitting ? <FiLoader className="animate-spin" /> : 'Confirm Assignment'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -686,6 +767,7 @@ const GlobalPoolTab = ({
           </div>
         </div>
       </div>
+      <AssignmentModal />
     </div>
   );
 };

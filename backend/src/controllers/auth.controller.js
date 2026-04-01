@@ -95,9 +95,6 @@ const userLoggedIn = asyncHandler(async(req,res)=>{
 
         const loginUser = await User.findById(user._id).select("-password  -refreshToken");
 
-        console.log({...loginUser._doc});
-
-
       return res
       .status(200)
       .cookie("accessToken", accessToken, options)

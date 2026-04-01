@@ -21,9 +21,6 @@ const verifyJWTInter = async(req,_,next) => {
             throw new ApiError(400, "Please check token first")
           }
 
-          console.log("decodedToken :" ,decodedToken);
-
-
           const intern = await Intern.findById(decodedToken?._id)
 
           if(!intern) {

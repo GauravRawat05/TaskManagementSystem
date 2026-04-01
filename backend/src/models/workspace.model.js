@@ -23,7 +23,7 @@ const workspaceSchema = new Schema(
         },
         role: {
           type: String,
-          enum: ["ADMIN", "MANAGER", "MEMBER"],
+          enum: ["ADMIN", "MANAGER", "MEMBER", "TEAM_LEADER"],
           required: true
         }
       }

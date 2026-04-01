@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import UserCard from '../Cards/UserCard';
 
-const MembersTab = ({ members, formatDate, onRoleChange, isEditable = false }) => {
+const MembersTab = ({ members, formatDate, onRoleChange, onViewProfile, isEditable = false }) => {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
@@ -111,7 +111,7 @@ const MembersTab = ({ members, formatDate, onRoleChange, isEditable = false }) =
           {filteredMembers.map((member) => (
             <UserCard
               key={member.user?._id || member._id}
-              member={member}
+              member={{ ...member, onViewProfile }}
               formatDate={formatDate}
               showJoinedDate={true}
               onRoleChange={onRoleChange}

@@ -174,8 +174,6 @@ export const AuthProvider = ({ children }) => {
 
       if (!userData) throw new Error("User fetch failed");
 
-      console.log("login successfully")
-
       return { success: true };
 
     } finally {
@@ -197,7 +195,7 @@ export const AuthProvider = ({ children }) => {
     try {
 
       const res = await registerAdmin(payload);
-      console.log(res.data.message || "login successfully")
+
       return { success: true, data: res.data };
     }
     catch(error) {

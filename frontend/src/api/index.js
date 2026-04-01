@@ -8,7 +8,7 @@ export const registerAdmin = (data) => {
 }
 
 export const commonLogin = (data) => {
-    console.log("data",data);
+
     return apiClient.post("/auth/user/login", data);
 }
 
@@ -62,7 +62,11 @@ export const inviteUserToWorkspace = (data) => {
 }
 
 export const removeWorkspaceMember = (data) => {
-  return apiClient.delete(`/workspace/remove-member/${data.workspaceId}`, data); // Added return
+  return apiClient.delete(`/workspace/${data.workspaceId}/member/${data.userId}`); // Corrected endpoint
+}
+
+export const updateUserRole = (data) => {
+  return apiClient.patch(`/workspace/${data.workspaceId}/role/${data.userId}`, data); // Move from team to workspace
 }
 
 export const getWorkspaces = () => {
@@ -73,6 +77,14 @@ export const getWorkspaceById = (data) => {
   return apiClient.get(`/workspace/${data.workspaceId}`); // Added return
 }
 
+export const getMyWorkspaceRole = (workspaceId) => {
+  return apiClient.get(`/workspace/${workspaceId}/my-role`); 
+}
+
+export const deleteWorkspace = (workspaceId) => {
+  return apiClient.delete(`/workspace/${workspaceId}`);
+}
+
 // ------------------------------ X ------------------------------------
 // project
 
@@ -81,7 +93,7 @@ export const createProject = (data) => {
 }
 
 export const getProjects = (data) => {
-  console.log("data",data);
+
   return apiClient.get(`/project/workspace/${data.workspaceId}`); // Added return
 }
 
@@ -94,7 +106,7 @@ export const updateProjectDeadline = (data) => {
 }
 
 export const deleteProject = (data) => {
-  return apiClient.delete(`/project/${data.projectId}`); // Added return
+  return apiClient.delete(`/project/${data.workspaceId}/delete/${data.projectId}`); // Updated
 }
 
 // signle user project
@@ -107,7 +119,7 @@ export const getprojectOfUser = () => {
 // team
 
 export const createTeam = (data) => {
-  console.log("data 3",data);
+
   return apiClient.post("/team/add/team", data); // Added return
 }
 
@@ -120,7 +132,7 @@ export const updateTeam = (data) => {
 }
 
 export const addNewMemberInTeam = (data) => {
-  return apiClient.patch(`/team/add-memeber/team/${data.teamId}`, data); // Added return
+  return apiClient.patch(`/team/add-memeber/team/${data.teamId}`, { newMemberId: data.newMemberId });
 }
 
 export const setNewTeamLeader = (data) => {
@@ -135,24 +147,59 @@ export const removeTeamLeaderAndAddToTeam = (data) => {
   return apiClient.patch(`/team/remove-lead/add-team/${data.teamId}`, data); // Added return
 }
 
-export const updateUserRole = (data) => {
-  return apiClient.patch(`/team/update-role/${data.teamId}`, data); // Added return
-}
+// Removed deprecated role update from teams
+
 
 export const deleteTeam = (data) => {
-  return apiClient.delete(`/team/${data.teamId}`); // Added return
+  return apiClient.delete(`/team/${data.workspaceId}/delete/${data.teamId}`); // Updated
 }
 
 
 // ------------------------------ X ------------------------------------
 //
 
-export const createProjectTask = (data) => {
+export const createTask = (data) => {
   return apiClient.post("/task/new-task", data);
 }
+export const createProjectTask = createTask;
 
+export const getTasks = (params) => {
+  return apiClient.get("/task/get/tasks", { params });
+}
 export const getProjectTask = (data) => {
-  return apiClient.get(`/task/get/all-task/${data.projectId}`);
+  return apiClient.get(`/task/get/task/${data.projectId}`); // legacy
+}
+
+export const updateTask = (taskId, data) => {
+  return apiClient.patch(`/task/update/${taskId}`, data);
+}
+export const updateProjectTask = (data) => {
+  return updateTask(data.taskId, data);
+}
+
+export const deleteTask = (taskId) => {
+  return apiClient.delete(`/task/delete/${taskId}`);
+}
+
+// ------------------------------ X ------------------------------------
+// reports
+
+export const submitReport = (data) => {
+  return apiClient.post("/report/submit", data);
+}
+
+export const submitTaskReport = submitReport;
+
+export const getMyReports = (params) => {
+  return apiClient.get("/report/my-reports", { params });
+}
+
+export const getTeamReports = (teamId, params) => {
+  return apiClient.get(`/report/team/${teamId}`, { params });
+}
+
+export const getTaskReports = (data) => {
+  return apiClient.get(`/report/task/${data.taskId}`); // legacy
 }
 
 
@@ -161,7 +208,7 @@ export const getProjectTask = (data) => {
 // workplace invait token
 
 export const generateInviteToken = (data) => {
-    console.log("data",data);
+
     return apiClient.post("/invite/generate", data);
 }
 

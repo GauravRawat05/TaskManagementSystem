@@ -28,9 +28,9 @@ const Login = () => {
 
     try {
       setLoading(true);
-      console.log('Login attempt:', form);
+
       await login(form);
-      console.log('Login successful');
+
       setSuccess(true);
 
       setTimeout(() => {
