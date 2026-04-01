@@ -45,8 +45,13 @@ app.use("/api/v1/tms/report", reportRouter)
 // global error handler
 // ======================================================
 app.use((err, req, res, next) => {
-  console.error(err);
   const statusCode = err.statusCode || 500;
+  
+  // Dont pollute logs with expected auth checking errors
+  if (statusCode !== 401) {
+    console.error(err);
+  }
+
   const message = err.message || 'Internal Server Error';
   res.status(statusCode).json({
     success: false,

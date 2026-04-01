@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiX, FiMail, FiLoader, FiCheckCircle, FiSend, FiUserPlus, FiShield, FiUserCheck } from 'react-icons/fi';
 
 const InviteLinkModal = ({
@@ -15,15 +15,22 @@ const InviteLinkModal = ({
 
   if (!show) return null;
 
-  const roles = [
-    { value: 'INTERN', label: 'Intern', icon: FiUserPlus, color: 'green', description: 'Limited access for learning and development' },
-    { value: 'TEAM_MEMBER', label: 'Team Member', icon: FiUserCheck, color: 'blue', description: 'Standard member access' },
-    { value: 'TEAM_LEADER', label: 'Team Leader', icon: FiUserCheck, color: 'indigo', description: 'Can lead teams and assign tasks' },
-    ...((isSuperuser || userRole === 'Admin' || userRole === 'ADMIN') ? [
-      { value: 'MANAGER', label: 'Manager', icon: FiShield, color: 'purple', description: 'Can manage projects and teams' },
-      { value: 'ADMIN', label: 'Admin', icon: FiShield, color: 'red', description: 'Full control over workspace' }
-    ] : [])
-  ];
+  const isAdminOrSuperuser = isSuperuser || userRole === 'Admin' || userRole === 'ADMIN';
+
+  const roles = isAdminOrSuperuser
+    ? [
+        { value: 'ADMIN', label: 'Admin', icon: FiShield, color: 'red', description: 'Full control over workspace' },
+        { value: 'MANAGER', label: 'Manager', icon: FiShield, color: 'purple', description: 'Can manage projects and teams' }
+      ]
+    : [
+        { value: 'MEMBER', label: 'Team Member', icon: FiUserCheck, color: 'blue', description: 'Standard member access' }
+      ];
+
+  useEffect(() => {
+    if (show && inviteLinkData && !roles.find(r => r.value === inviteLinkData.role)) {
+      setInviteLinkData(prev => ({ ...prev, role: roles[0].value }));
+    }
+  }, [show, inviteLinkData?.role]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -39,8 +46,8 @@ const InviteLinkModal = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in duration-200">
-        <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-6 rounded-t-2xl">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col animate-in fade-in zoom-in duration-200">
+        <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-6 rounded-t-2xl flex-shrink-0">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -60,7 +67,7 @@ const InviteLinkModal = ({
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto custom-scrollbar">
           {!emailSent ? (
             <form onSubmit={handleSubmit}>
               <div className="mb-5">
@@ -175,7 +182,7 @@ const InviteLinkModal = ({
                 onClick={() => {
                   onClose();
                   setEmailSent(false);
-                  setInviteLinkData({ email: '', role: 'TEAM_MEMBER' });
+                  setInviteLinkData({ email: '', role: isAdminOrSuperuser ? 'ADMIN' : 'MEMBER' });
                 }}
                 className="w-full bg-gradient-to-r from-gray-800 to-gray-900 text-white py-3 rounded-xl hover:from-gray-900 hover:to-black transition-all font-medium"
               >

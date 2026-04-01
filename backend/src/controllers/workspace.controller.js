@@ -4,8 +4,17 @@ import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
-// Superuser: Create a new workspace
+// Superuser or Admin: Create a new workspace
 const createWorkspace = asyncHandler(async (req, res) => {
+    if (!req.user.isSuperuser) {
+        const isAdminInAnyWorkspace = await Workspace.exists({
+            members: { $elemMatch: { user: req.user._id, role: "ADMIN" } }
+        });
+        if (!isAdminInAnyWorkspace) {
+            throw new ApiError(403, "Forbidden! Only Admins and Superusers can create workspaces.");
+        }
+    }
+
     const { name, description } = req.body;
 
     if (!name || name.trim() === "") {
@@ -209,5 +218,26 @@ const getMyWorkspaceRole = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, { role }, 'Workspace role fetched'));
 });
 
-export { createWorkspace, getWorkspaces, getWorkspaceById, addWorkspaceManager, inviteUserToWorkspace, updateWorkspaceMemberRole, removeWorkspaceMember, getMyWorkspaceRole };
+const deleteWorkspace = asyncHandler(async (req, res) => {
+    const { workspaceId } = req.params;
+
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+        throw new ApiError(404, "Workspace not found");
+    }
+
+    // Only allow Superuser or Workspace ADMIN to delete
+    if (!req.user.isSuperuser) {
+        const member = workspace.members.find(m => m.user.toString() === req.user._id.toString());
+        if (!member || member.role !== "ADMIN") {
+            throw new ApiError(403, "Forbidden! Only Workspace Admins and Superusers can delete this workspace.");
+        }
+    }
+
+    await Workspace.findByIdAndDelete(workspaceId);
+
+    return res.status(200).json(new ApiResponse(200, {}, "Workspace deleted successfully"));
+});
+
+export { createWorkspace, getWorkspaces, getWorkspaceById, addWorkspaceManager, inviteUserToWorkspace, updateWorkspaceMemberRole, removeWorkspaceMember, getMyWorkspaceRole, deleteWorkspace };
 

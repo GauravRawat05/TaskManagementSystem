@@ -43,6 +43,7 @@ const Dashboard = ({
   setShowCreateProjectModal,
   setShowCreateTeamModal,
   setShowInviteModal,
+  setShowDeleteWorkplaceModal,
   handleDeleteProject,
   handleUpdateProjectDeadline,
   ...props
@@ -64,8 +65,8 @@ const Dashboard = ({
   // Check if user has admin/manager permissions (using correct spelling)
   const hasManagementAccess = currentUserRole === "MANAGER" || currentUserRole === "ADMIN" || isSuperuser;
 
-  // Check if user can create workplace (admin/manager or has explicit permission)
-  const canCreateWorkplaceAccess = hasManagementAccess || canCreateWorkplace;
+  // Check if user can create workspace (admin or superuser)
+  const canCreateWorkplaceAccess = currentUserRole === "ADMIN" || isSuperuser;
 
   // Check if user can create/edit/delete (management actions)
   const canManage = hasManagementAccess;
@@ -197,8 +198,15 @@ const Dashboard = ({
       label: 'Create Workplace',
       icon: FiPlus,
       onClick: () => setShowCreateWorkplaceModal(true),
-      visible: canManage && canCreateWorkplaceAccess,
+      visible: canCreateWorkplaceAccess,
       color: 'bg-orange-600 hover:bg-orange-700'
+    },
+    {
+      label: 'Delete Workplace',
+      icon: FiAlertCircle,
+      onClick: () => setShowDeleteWorkplaceModal(true),
+      visible: canCreateWorkplaceAccess,
+      color: 'bg-red-600 hover:bg-red-700'
     },
     {
       label: 'Create Team',

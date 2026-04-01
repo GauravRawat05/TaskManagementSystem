@@ -81,6 +81,10 @@ export const getMyWorkspaceRole = (workspaceId) => {
   return apiClient.get(`/workspace/${workspaceId}/my-role`); 
 }
 
+export const deleteWorkspace = (workspaceId) => {
+  return apiClient.delete(`/workspace/${workspaceId}`);
+}
+
 // ------------------------------ X ------------------------------------
 // project
 

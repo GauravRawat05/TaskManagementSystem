@@ -26,7 +26,8 @@ import {
   updateTeam,
   updateUserRole,
   removeWorkspaceMember,
-  inviteUserToWorkspace
+  inviteUserToWorkspace,
+  deleteWorkspace
 } from '../../api/index';
 import { useAuth } from '../../context/AuthContext';
 import { requestHandler } from '../../utils/index';
@@ -50,6 +51,7 @@ const TeamsTab = lazy(() => import('./TeamsTab'));
 const Profile = lazy(() => import('./Profile'));
 const TaskComponent = lazy(() => import('./TaskComponent'));
 const AddMemberModal = lazy(() => import('./Models/AddMemberModal'));
+const DeleteWorkplaceModal = lazy(() => import('./Models/DeleteWorkplaceModal'));
 
 // Loading fallback component
 const LoadingFallback = ({ message = "Loading..." }) => (
@@ -158,6 +160,7 @@ const WorkPlaceHome = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showWorkplaceDropdown, setShowWorkplaceDropdown] = useState(false);
   const [showCreateWorkplaceModal, setShowCreateWorkplaceModal] = useState(false);
+  const [showDeleteWorkplaceModal, setShowDeleteWorkplaceModal] = useState(false);
   const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
   const [showEditProjectModal, setShowEditProjectModal] = useState(null);
   const [showEditDeadlineModal, setShowEditDeadlineModal] = useState(null);
@@ -660,6 +663,33 @@ const WorkPlaceHome = () => {
   }, [selectedWorkplace, canManageMembers, loadWorkspaceDetails]);
 
   // CRUD Operations (keeping existing ones)
+  const handleDeleteWorkspace = useCallback(() => {
+    if (!selectedWorkplace) return;
+    
+    requestHandler(
+      () => deleteWorkspace(selectedWorkplace),
+      () => {}, // set loading handling is internal to modal
+      () => {
+        showToast('Workspace deleted successfully!', 'success');
+        setShowDeleteWorkplaceModal(false);
+        // Navigate or reload
+        const newWorkplaces = workplaces.filter(w => w._id !== selectedWorkplace);
+        setWorkplaces(newWorkplaces);
+        if (newWorkplaces.length > 0) {
+          handleWorkspaceChange(newWorkplaces[0]._id);
+        } else {
+          // If no workspaces left, maybe clear URL
+          setSelectedWorkplace(null);
+          navigate('/dashboard');
+        }
+      },
+      (error) => {
+        console.error("Failed to delete workspace:", error);
+        showToast(error?.message || 'Failed to delete workspace', 'error');
+      }
+    );
+  }, [selectedWorkplace, workplaces, handleWorkspaceChange, navigate]);
+
   const handleCreateProject = useCallback((projectData) => {
     if (!projectData.projectName || !projectData.startDate || !projectData.deadline) {
       showToast('Please fill all required fields', 'error');
@@ -1091,6 +1121,7 @@ const WorkPlaceHome = () => {
       canDeleteProject,
       setSelectedWorkplace: handleWorkspaceChange,
       setShowCreateWorkplaceModal,
+      setShowDeleteWorkplaceModal,
       setShowInviteModal,
       setShowCreateProjectModal,
       setShowCreateTeamModal,
@@ -1488,7 +1519,18 @@ const WorkPlaceHome = () => {
               newWorkplace={newWorkplace}
               setNewWorkplace={setNewWorkplace}
               creatingWorkspace={creatingWorkspace}
-              canCreate={isSuperuser}
+              canCreate={isSuperuser || currentUserRole === 'ADMIN'}
+            />
+          )}
+        </Suspense>
+
+        <Suspense fallback={<ModalLoadingFallback />}>
+          {showDeleteWorkplaceModal && (
+            <DeleteWorkplaceModal
+              isOpen={showDeleteWorkplaceModal}
+              onClose={() => setShowDeleteWorkplaceModal(false)}
+              workplaceName={workplaces.find(w => w._id === selectedWorkplace)?.name}
+              onDelete={handleDeleteWorkspace}
             />
           )}
         </Suspense>

@@ -7,14 +7,15 @@ import {
   inviteUserToWorkspace,
   updateWorkspaceMemberRole,
   removeWorkspaceMember,
-  getMyWorkspaceRole
+  getMyWorkspaceRole,
+  deleteWorkspace
 } from "../controllers/workspace.controller.js";
 import { verifyJWT, verifySuperuser, verifyWorkspaceAdmin } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// Superuser creates workspace
-router.route("/create").post(verifyJWT, verifySuperuser, createWorkspace);
+// Superuser or Admin creates workspace
+router.route("/create").post(verifyJWT, createWorkspace);
 
 // Admin adds members / managers
 router.route("/add-manager/:workspaceId").post(verifyJWT, addWorkspaceManager);
@@ -30,5 +31,6 @@ router.route("/:workspaceId/my-role").get(verifyJWT, getMyWorkspaceRole);
 // General workspace queries
 router.route("/all").get(verifyJWT, getWorkspaces);
 router.route("/:workspaceId").get(verifyJWT, getWorkspaceById);
+router.route("/:workspaceId").delete(verifyJWT, deleteWorkspace);
 
 export default router;
