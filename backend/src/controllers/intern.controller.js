@@ -110,8 +110,6 @@ const addSingleIntern = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'A user with this email already exists');
   }
 
-  const hashedPassword = await hash(DEFAULT_PASSWORD, 10);
-
   let joiningDate = new Date();
   if (joinDate) {
     const parts = String(joinDate).split('-');
@@ -122,7 +120,7 @@ const addSingleIntern = asyncHandler(async (req, res) => {
     name: String(name).trim(),
     email: normalizedEmail,
     phone: phone ? String(phone).trim() : '',
-    password: hashedPassword,
+    password: DEFAULT_PASSWORD,
     domain: domain ? String(domain).trim() : undefined,
     joiningDate,
     internId: intern_id ? String(intern_id).trim() : undefined,

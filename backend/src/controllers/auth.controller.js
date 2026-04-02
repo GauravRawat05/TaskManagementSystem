@@ -23,7 +23,7 @@ import crypto from 'crypto'
       user.refreshToken = refreshToken
 
 
-      user.save({validateBeforeSave : false})
+      await user.save({validateBeforeSave : false})
 
       return {
         accessToken,
@@ -109,11 +109,11 @@ const userLoggedIn = asyncHandler(async(req,res)=>{
 //  Singout User
 const userLoggedOut = asyncHandler(async(req,res)=>{
 
-       await User.findByIdAndUpdate(req.user._id,{
-          $set : {
-            refreshTokne : ""
-          },
-      },{ new : true })
+       const user = await User.findById(req.user._id)
+       if(user){
+         user.refreshToken = ""
+         await user.save({ validateBeforeSave: false })
+       }
 
 
   return res
@@ -148,12 +148,9 @@ const changeCurrentPassword = asyncHandler(async(req,res)=>{
       throw new ApiError(400, "Credientials faild please enter valid password")
     }
 
-    await User.findByIdAndUpdate(user._id, {
-        $set : {
-          password : newPassword,
-          defaultPasswordChanged : true
-        }
-    }, { new : true}).select("-password -refreshToken")
+    user.password = newPassword
+    user.defaultPasswordChanged = true
+    await user.save({ validateBeforeSave: false })
 
 
     return res.status(200).json(new ApiResponse(200, {} , "User password change Successfully"))
