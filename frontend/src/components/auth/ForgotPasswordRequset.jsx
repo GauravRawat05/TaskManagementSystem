@@ -39,7 +39,7 @@ const ForgotPasswordRequset = () => {
       setStatus({ type: 'error', message: 'Please enter a valid email address' });
       return;
     }
-
+    
     await requestHandler(
       async () => {
         const response = await forgetPasswordRequest({ email });
